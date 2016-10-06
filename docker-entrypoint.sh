@@ -6,6 +6,7 @@ export BUILDDIR=/build
 export PKGDEST=/repo
 export SRCDEST=/srcdest
 export SRCPKGDEST=/srcpkgdest
+export GNUPGHOME=/gnupg
 
 # this is required to build some packages
 export SHELL=/bin/bash

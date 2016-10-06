@@ -13,7 +13,7 @@ RUN chmod 440 /etc/sudoers.d/builduser-pacman
 RUN sed -i '/\[testing\]/i \
         [geschenkerbauer]\nSigLevel = Never\nServer = file:///repo\n' /etc/pacman.conf
 
-VOLUME ["/buildsrc", "/repo"]
+VOLUME ["/buildsrc", "/gnupg", "/repo"]
 
 COPY docker-entrypoint.sh /
 ENTRYPOINT ["/docker-entrypoint.sh"]

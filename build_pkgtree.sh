@@ -3,6 +3,7 @@
 buildhost=coreos1
 buildsrcdir=/tmp/geschenkerbauer.cBCw5WkbOy
 repodir=/home/core/arch/repo
+gpgdir=/home/core/arch/gnupg
 PACKAGER="mutantmonkey <archpkg@mutantmonkey.mx>"
 
 declare -A pkgbases
@@ -38,7 +39,7 @@ function build_deptree() {
             build_deptree "$pkgbase"
     done
 
-    ssh $buildhost -t docker run --rm -it -v "$buildsrcdir/$1":/buildsrc -v "$repodir":/repo -e "PACKAGER='$PACKAGER'" geschenkerbauer
+    ssh $buildhost -t docker run --rm -it -v "$buildsrcdir/$1":/buildsrc -v "$gpgdir":/gnupg -v "$repodir":/repo -e "PACKAGER='$PACKAGER'" geschenkerbauer
     [ $? -eq 0 ] && builtpkgs[$1]=1
 }
 

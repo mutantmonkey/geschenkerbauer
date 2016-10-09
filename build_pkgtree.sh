@@ -49,7 +49,7 @@ function build_all() {
     done
 }
 
-rsync -avP ~/builds/packages/ $buildhost:$buildsrcdir
+rsync -avP ~/arch/packages/ $buildhost:$buildsrcdir
 
 if [ -n "$1" ]; then
     [ -d "$1" ] || (echo "Package $1 does not exist in the current directory." && exit 1)

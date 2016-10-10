@@ -4,7 +4,7 @@ buildhost=coreos1
 buildsrcdir=/tmp/geschenkerbauer.cBCw5WkbOy
 repodir=/home/core/arch/repo
 gpgdir=/home/core/arch/gnupg
-PACKAGER="mutantmonkey <archpkg@mutantmonkey.mx>"
+PACKAGER="Change Me <user@localhost>"
 
 declare -A pkgbases
 declare -A builtpkgs

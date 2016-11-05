@@ -1,4 +1,4 @@
-FROM arch
+FROM mutantmonkey/arch
 
 RUN set -x \
         && pacman -Syu --noconfirm \

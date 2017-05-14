@@ -1,10 +1,12 @@
 #!/bin/bash
 
-buildhost=coreos1
-buildsrcdir=/tmp/geschenkerbauer.cBCw5WkbOy
-repodir=/home/core/arch/repo
-gpgdir=/home/core/arch/gnupg
-PACKAGER="Change Me <user@localhost>"
+. "$(dirname "$0")"/config.sh
+
+[[ -z "$buildhost" ]] && echo "missing buildhost" && exit 1
+[[ -z "$buildsrcdir" ]] && echo "missing buildsrcdir" && exit 1
+[[ -z "$repodir" ]] && echo "missing repodir" && exit 1
+[[ -z "$gpgdir" ]] && echo "missing gpgdir" && exit 1
+[[ -z "$PACKAGER" ]] && echo "missing PACKAGER" && exit 1
 
 declare -A pkgbases
 declare -A builtpkgs
@@ -39,7 +41,7 @@ function build_deptree() {
             build_deptree "$pkgbase"
     done
 
-    ssh $buildhost -t docker run --rm -it -v "$buildsrcdir/$1":/buildsrc -v "$gpgdir":/gnupg -v "$repodir":/repo -e "PACKAGER='$PACKAGER'" geschenkerbauer
+    ssh $buildhost -t docker run --rm -it -v "$buildsrcdir/$1":/buildsrc -v "$gpgdir":/gnupg -v "$repodir":/repo -e "PACKAGER='$PACKAGER'" quay.io/mutantmonkey/geschenkerbauer:latest
     [ $? -eq 0 ] && builtpkgs[$1]=1
 }
 
@@ -49,7 +51,7 @@ function build_all() {
     done
 }
 
-rsync -avP ~/arch/packages/ $buildhost:$buildsrcdir
+rsync -avP . $buildhost:$buildsrcdir
 
 if [ -n "$1" ]; then
     [ -d "$1" ] || (echo "Package $1 does not exist in the current directory." && exit 1)

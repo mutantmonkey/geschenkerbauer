@@ -1,0 +1,5 @@
+buildhost=coreos1
+buildsrcdir=/home/core/arch/packages
+repodir=/home/core/arch/repo
+gpgdir=/home/core/arch/gnupg
+PACKAGER="Erika Mustermann <erika@example.com>"

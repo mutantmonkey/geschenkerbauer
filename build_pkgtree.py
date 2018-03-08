@@ -107,7 +107,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="Build a package (and its dependencies) with "
                     "geschenkerbauer")
-    parser.add_argument('--buildhost', help="Build host")
+    parser.add_argument('--buildhost', required=True, help="Build host")
     parser.add_argument('--buildscript',
                         default="arch/geschenkerbauer/build_pkg_server.sh",
                         help="Script used to run the build")

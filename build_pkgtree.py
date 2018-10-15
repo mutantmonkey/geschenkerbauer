@@ -4,6 +4,7 @@ import argparse
 import os.path
 import re
 import subprocess
+import shlex
 import sys
 import tarfile
 
@@ -75,8 +76,12 @@ def get_dependencies(pkgname):
     pkgs = []
     split_re = re.compile('[<>=]+')
 
-    output = subprocess.check_output(['makepkg', '--printsrcinfo'],
-                                     cwd=pkgname)
+    try:
+        output = subprocess.check_output(['makepkg', '--printsrcinfo'],
+                                         cwd=pkgname)
+    except subprocess.CalledProcessError:
+        return pkgs
+
     for line in output.decode('utf-8').splitlines():
         data = line.split(' = ', 1)
         if len(data) < 2:
@@ -111,8 +116,22 @@ if __name__ == '__main__':
     parser.add_argument('--buildscript',
                         default="arch/geschenkerbauer/build_pkg_server.sh",
                         help="Script used to run the build")
+    parser.add_argument('--buildsrcdir',
+                        default="/home/core/arch/packages",
+                        help="Source package directory")
+    parser.add_argument('--repodir',
+                        default="/home/core/arch/repo",
+                        help="Repository directory")
+    parser.add_argument('--gpgdir',
+                        default="/home/core/arch/gnupg",
+                        help="GnuPG data directory")
+    parser.add_argument('--packager',
+                        default="geschenkerbauer <geschenkerbauer@localhost>",
+                        help="Packager")
     parser.add_argument('--dbpath', default="/var/lib/pacman",
                         help="Path to pacman database directory")
+    parser.add_argument('--skip-copy', action='store_true', default=False,
+                        help="Start build without copying packages")
     parser.add_argument('pkgs', nargs='+')
     args = parser.parse_args()
 
@@ -133,7 +152,18 @@ if __name__ == '__main__':
 
     print(pkgs_to_build)
 
-    # TODO: copy arch/packages to buildsrcdir
+    if not args.skip_copy:
+        # TODO: consider making this work from outside local buildsrcdir
+        # would need an argument to specify path to packages
+        subprocess.run(['rsync', '-avP'] + pkgs_to_build +
+                        [':'.join([args.buildhost, args.buildsrcdir])])
 
-    subprocess.run(['ssh', args.buildhost, args.buildscript],
+    ssh_args = [
+        'buildsrcdir={0}'.format(shlex.quote(args.buildsrcdir)),
+        'repodir={0}'.format(shlex.quote(args.repodir)),
+        'gpgdir={0}'.format(shlex.quote(args.gpgdir)),
+        'PACKAGER={0}'.format(shlex.quote(args.packager)),
+        args.buildscript,
+    ]
+    subprocess.run(['ssh', args.buildhost] + ssh_args,
                    input='\n'.join(pkgs_to_build), encoding='utf-8')

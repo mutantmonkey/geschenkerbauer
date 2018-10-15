@@ -1,7 +1,5 @@
 #!/bin/bash
 
-. "$(dirname "$0")"/config.sh
-
 [[ -z "$buildsrcdir" ]] && echo "missing buildsrcdir" && exit 1
 [[ -z "$repodir" ]] && echo "missing repodir" && exit 1
 [[ -z "$gpgdir" ]] && echo "missing gpgdir" && exit 1

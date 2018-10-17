@@ -1,4 +1,4 @@
-FROM quay.io/mutantmonkey/arch:latest
+FROM archlinux/base
 
 RUN set -x \
         && pacman -Syu --noconfirm \

@@ -3,9 +3,9 @@
 A Dockerfile and build scripts to build directories containing Arch packages.
 
 ## Usage
-In order to build this, you will need an existing "arch" image in your local
-Docker registry. You can use my
-[docker-arch](https://github.com/mutantmonkey/docker-arch) tools to create one.
+Just run `build_pkgtree.py` in the same directory as the Arch package you'd
+like to build; you'll just need to specify `--buildhost` and the name of the
+package to build.
 
 ## Known Issues
 * You will need to manually initialize a GnuPG keyring. The included

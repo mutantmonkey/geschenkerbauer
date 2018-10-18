@@ -113,9 +113,10 @@ if __name__ == '__main__':
         description="Build a package (and its dependencies) with "
                     "geschenkerbauer")
     parser.add_argument('--buildhost', required=True, help="Build host")
-    parser.add_argument('--buildscript',
-                        default="arch/geschenkerbauer/build_pkg_server.sh",
-                        help="Script used to run the build")
+    parser.add_argument(
+        '--controller-image',
+        default="quay.io/mutantmonkey/geschenkerbauer-controller:latest",
+        help="Docker image that will be launched on the build host")
     parser.add_argument('--buildsrcdir',
                         default="/home/core/arch/packages",
                         help="Source package directory")
@@ -129,7 +130,7 @@ if __name__ == '__main__':
                         default="geschenkerbauer <geschenkerbauer@localhost>",
                         help="Packager")
     parser.add_argument('--dbpath', default="/var/lib/pacman",
-                        help="Path to pacman database directory")
+                        help="Path to local pacman database directory")
     parser.add_argument('--skip-copy', action='store_true', default=False,
                         help="Start build without copying packages")
     parser.add_argument('pkgs', nargs='+')
@@ -156,14 +157,23 @@ if __name__ == '__main__':
         # TODO: consider making this work from outside local buildsrcdir
         # would need an argument to specify path to packages
         subprocess.run(['rsync', '-avP'] + pkgs_to_build +
-                        [':'.join([args.buildhost, args.buildsrcdir])])
+                       [':'.join([args.buildhost, args.buildsrcdir])])
 
     ssh_args = [
+        'docker',
+        'run',
+        '--rm',
+        '-v',
+        '/var/run/docker.sock:/var/run/docker.sock',
+        '-e',
         'buildsrcdir={0}'.format(shlex.quote(args.buildsrcdir)),
+        '-e',
         'repodir={0}'.format(shlex.quote(args.repodir)),
+        '-e',
         'gpgdir={0}'.format(shlex.quote(args.gpgdir)),
+        '-e',
         'PACKAGER={0}'.format(shlex.quote(args.packager)),
-        args.buildscript,
+        args.controller_image,
     ]
-    subprocess.run(['ssh', args.buildhost] + ssh_args,
-                   input='\n'.join(pkgs_to_build), encoding='utf-8')
+    ssh_args += pkgs_to_build
+    subprocess.run(['ssh', args.buildhost] + ssh_args)

@@ -115,7 +115,7 @@ if __name__ == '__main__':
     parser.add_argument('--buildhost', required=True, help="Build host")
     parser.add_argument(
         '--controller-image',
-        default="quay.io/mutantmonkey/geschenkerbauer-controller:latest",
+        default="mutantmonkey/geschenkerbauer-controller:latest",
         help="Docker image that will be launched on the build host")
     parser.add_argument('--buildsrcdir',
                         default="/home/core/arch/packages",

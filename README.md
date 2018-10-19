@@ -1,6 +1,6 @@
 # geschenkerbauer
 
-A Dockerfile and build scripts to build directories containing Arch packages.
+A tool to build Arch packages using Docker.
 
 ## Usage
 Just run `build_pkgtree.py` in the same directory as the Arch package you'd

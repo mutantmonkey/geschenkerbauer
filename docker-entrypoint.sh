@@ -6,10 +6,17 @@ export BUILDDIR=/build
 export PKGDEST=/repo
 export SRCDEST=/srcdest
 export SRCPKGDEST=/srcpkgdest
-export GNUPGHOME=/gnupg
 
 # this is required to build some packages
 export SHELL=/bin/bash
+
+# create a temporary gnupg keyring if an existing one was not provided
+if [[ -z "$GNUPGHOME" ]]; then
+    export GNUPGHOME=/gnupg
+    if [[ -n "$GNUPG_PUBKEYRING" ]]; then
+        gpg2 --import "$GNUPG_PUBKEYRING"
+    fi
+fi
 
 # create an empty repo database if one does not exist
 [ -e /repo/$REPONAME.db ] || touch /repo/$REPONAME.db

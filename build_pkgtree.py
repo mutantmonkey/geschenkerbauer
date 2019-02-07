@@ -124,7 +124,6 @@ if __name__ == '__main__':
                         default="/home/core/arch/repo",
                         help="Repository directory")
     parser.add_argument('--gpgdir',
-                        default="/home/core/arch/gnupg",
                         help="GnuPG data directory")
     parser.add_argument('--packager',
                         default="geschenkerbauer <geschenkerbauer@localhost>",
@@ -170,10 +169,15 @@ if __name__ == '__main__':
         '-e',
         'repodir={0}'.format(shlex.quote(args.repodir)),
         '-e',
-        'gpgdir={0}'.format(shlex.quote(args.gpgdir)),
-        '-e',
         'PACKAGER={0}'.format(shlex.quote(args.packager)),
-        args.controller_image,
     ]
+
+    if args.gpgdir is not None:
+        ssh_args += [
+             '-e',
+            'gpgdir={0}'.format(shlex.quote(args.gpgdir)),
+        ]
+
+    ssh_args += [args.controller_image]
     ssh_args += pkgs_to_build
     subprocess.run(['ssh', args.buildhost] + ssh_args)

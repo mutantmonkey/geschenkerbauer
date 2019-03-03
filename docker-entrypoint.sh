@@ -31,6 +31,6 @@ makepkg $makepkg_args
 
 if [ $? -eq 0 ]; then
     for f in *.pkg.tar.xz; do
-        repo-add /repo/$REPONAME.db.tar.gz /repo/$f
+        repo-add -n /repo/$REPONAME.db.tar.gz /repo/$f
     done
 fi

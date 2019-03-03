@@ -3,7 +3,7 @@ set -e
 
 export REPONAME=geschenkerbauer
 export BUILDDIR=/build
-export PKGDEST=$(mktemp -d /var/tmp/pkgdest-XXXXXXXXXX)
+export PKGDEST=/repo
 export SRCDEST=/srcdest
 export SRCPKGDEST=/srcpkgdest
 
@@ -30,9 +30,7 @@ makepkg_args="-s --noconfirm $@"
 makepkg $makepkg_args
 
 if [ $? -eq 0 ]; then
-    cd "$PKGDEST"
-    for f in *; do
-        cp $f /repo/
+    for f in *.pkg.tar.xz; do
         repo-add /repo/$REPONAME.db.tar.gz /repo/$f
     done
 fi

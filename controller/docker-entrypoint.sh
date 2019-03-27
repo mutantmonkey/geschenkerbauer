@@ -15,11 +15,19 @@ for pkg in $@; do
             -e "GNUPGHOME=/gnupg" \
             -e "PACKAGER='$PACKAGER'" \
             mutantmonkey/geschenkerbauer:latest
+    elif [[ -n "$gpgkeyring" ]]; then
+        docker run --rm \
+            -v "$buildsrcdir/$pkg":/buildsrc \
+            -v "$repodir":/repo \
+            -v "$buildsrcdir/keyring.asc":/keyring.asc:ro \
+            -e "GNUPG_PUBKEYRING=/keyring.asc" \
+            -e PACKAGER \
+            mutantmonkey/geschenkerbauer:latest
     else
         docker run --rm \
             -v "$buildsrcdir/$pkg":/buildsrc \
             -v "$repodir":/repo \
-            -e "PACKAGER='$PACKAGER'" \
+            -e PACKAGER \
             mutantmonkey/geschenkerbauer:latest
     fi
 

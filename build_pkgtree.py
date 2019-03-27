@@ -125,6 +125,8 @@ if __name__ == '__main__':
                         help="Repository directory")
     parser.add_argument('--gpgdir',
                         help="GnuPG data directory")
+    parser.add_argument('--keyring',
+                        help="GnuPG keyring to import")
     parser.add_argument('--packager',
                         default="geschenkerbauer <geschenkerbauer@localhost>",
                         help="Packager")
@@ -177,6 +179,17 @@ if __name__ == '__main__':
              '-e',
             'gpgdir={0}'.format(shlex.quote(args.gpgdir)),
         ]
+
+    if args.keyring is not None:
+        if not args.skip_copy:
+            subprocess.run(
+                ['rsync', '-avP', args.keyring] +
+                [':'.join([
+                    args.buildhost,
+                    os.path.join(args.buildsrcdir, 'keyring.asc'),
+                ])]
+            )
+        ssh_args += ['-e', 'gpgkeyring=1']
 
     ssh_args += [args.controller_image]
     ssh_args += pkgs_to_build

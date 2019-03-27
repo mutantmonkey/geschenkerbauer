@@ -12,7 +12,7 @@ export SHELL=/bin/bash
 
 # create a temporary gnupg keyring if an existing one was not provided
 if [[ -z "$GNUPGHOME" ]]; then
-    export GNUPGHOME=/gnupg
+    export GNUPGHOME=/build/.gnupg
     if [[ -n "$GNUPG_PUBKEYRING" ]]; then
         gpg2 --import "$GNUPG_PUBKEYRING"
     fi

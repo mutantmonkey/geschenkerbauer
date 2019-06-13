@@ -30,7 +30,7 @@ makepkg_args="-s --noconfirm $@"
 makepkg $makepkg_args
 
 if [ $? -eq 0 ]; then
-    for f in *.pkg.tar.xz; do
-        repo-add -n /repo/$REPONAME.db.tar.gz /repo/$f
+    for f in $(makepkg --packagelist); do
+        repo-add /repo/$REPONAME.db.tar.gz $f
     done
 fi

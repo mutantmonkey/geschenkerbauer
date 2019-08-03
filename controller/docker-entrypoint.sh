@@ -4,6 +4,8 @@
 [[ -z "$repodir" ]] && echo "missing repodir" && exit 1
 [[ -z "$PACKAGER" ]] && echo "missing PACKAGER" && exit 1
 
+buildimg=${buildimg:-mutantmonkey/geschenkerbauer:latest}
+
 for pkg in $@; do
     echo "$pkg"
 
@@ -13,8 +15,9 @@ for pkg in $@; do
             -v "$gpgdir":/gnupg \
             -v "$repodir":/repo \
             -e "GNUPGHOME=/gnupg" \
-            -e "PACKAGER='$PACKAGER'" \
-            mutantmonkey/geschenkerbauer:latest
+            -e PACKAGER \
+            -e SOURCE_DATE_EPOCH \
+            $buildimg
     elif [[ -n "$gpgkeyring" ]]; then
         docker run --rm \
             -v "$buildsrcdir/$pkg":/buildsrc \
@@ -22,13 +25,15 @@ for pkg in $@; do
             -v "$buildsrcdir/keyring.asc":/keyring.asc:ro \
             -e "GNUPG_PUBKEYRING=/keyring.asc" \
             -e PACKAGER \
-            mutantmonkey/geschenkerbauer:latest
+            -e SOURCE_DATE_EPOCH \
+            $buildimg
     else
         docker run --rm \
             -v "$buildsrcdir/$pkg":/buildsrc \
             -v "$repodir":/repo \
             -e PACKAGER \
-            mutantmonkey/geschenkerbauer:latest
+            -e SOURCE_DATE_EPOCH \
+            $buildimg
     fi
 
     echo "Docker returned exit code $?"

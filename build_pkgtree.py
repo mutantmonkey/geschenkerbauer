@@ -117,6 +117,10 @@ if __name__ == '__main__':
         '--controller-image',
         default="mutantmonkey/geschenkerbauer-controller:latest",
         help="Docker image that will be launched on the build host")
+    parser.add_argument(
+        '--build-image',
+        help="Docker image that will be launched by the controller to build "
+             "each package")
     parser.add_argument('--buildsrcdir',
                         default="/home/core/arch/packages",
                         help="Source package directory")
@@ -173,6 +177,12 @@ if __name__ == '__main__':
         '-e',
         'PACKAGER={0}'.format(shlex.quote(args.packager)),
     ]
+
+    if args.build_image is not None:
+        ssh_args += [
+             '-e',
+            'buildimg={0}'.format(shlex.quote(args.build_image)),
+        ]
 
     if args.gpgdir is not None:
         ssh_args += [

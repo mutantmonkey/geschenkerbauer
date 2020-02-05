@@ -18,8 +18,8 @@ fi
 
 sudo pacman -Syu --noconfirm
 
-cd $(mktemp -d /var/tmp/buildsrc-XXXXXXXXXX)
-cp -a $GITHUB_WORKSPACE/buildsrc/. .
-
-makepkg_args="-s --noconfirm $@"
-makepkg $makepkg_args
+for pkg in $@; do
+    cd $GITHUB_WORKSPACE/buildsrc/$pkg
+    makepkg_args="-is --noconfirm $@"
+    makepkg $makepkg_args
+done

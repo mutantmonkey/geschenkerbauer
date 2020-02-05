@@ -1,4 +1,4 @@
-FROM archlinux/base
+FROM archlinux
 
 RUN set -x \
         && pacman -Syu --noconfirm \

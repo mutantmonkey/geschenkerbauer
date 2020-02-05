@@ -6,6 +6,8 @@ export BUILDDIR=/build
 export PKGDEST=/repo
 export SRCDEST=/srcdest
 export SRCPKGDEST=/srcpkgdest
+export INPUT_REPODIR=${INPUT_REPODIR:-/repo}
+export INPUT_BUILDSRC=${INPUT_BUILDSRC:-/buildsrc}
 
 # this is required to build some packages
 export SHELL=/bin/bash
@@ -19,18 +21,18 @@ if [[ -z "$GNUPGHOME" ]]; then
 fi
 
 # create an empty repo database if one does not exist
-[ -e /repo/$REPONAME.db ] || touch /repo/$REPONAME.db
+[ -e $INPUT_REPODIR/$REPONAME.db ] || touch $INPUT_REPODIR/$REPONAME.db
 
 sudo pacman -Syu --noconfirm
 
 cd $(mktemp -d /var/tmp/buildsrc-XXXXXXXXXX)
-cp -a /buildsrc/. .
+cp -a $INPUT_BUILDSRC/. .
 
 makepkg_args="-s --noconfirm $@"
 makepkg $makepkg_args
 
 if [ $? -eq 0 ]; then
     for f in $(makepkg --packagelist); do
-        repo-add /repo/$REPONAME.db.tar.gz $f
+        repo-add $INPUT_REPODIR/$REPONAME.db.tar.gz $f
     done
 fi

@@ -5,7 +5,7 @@ inputs:
     description: Package to build
     required: true
 runs:
-  using: 'docker'
-  image: 'Dockerfile'
+  using: docker
+  image: action/Dockerfile
   args:
     - ${{ inputs.package }}

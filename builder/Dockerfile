@@ -1,4 +1,4 @@
-FROM archlinux
+FROM archlinux:latest
 
 RUN set -x \
         && pacman -Syu --noconfirm \

@@ -6,8 +6,8 @@ export BUILDDIR=/build
 export PKGDEST=/repo
 export SRCDEST=/srcdest
 export SRCPKGDEST=/srcpkgdest
-export INPUT_REPODIR=${INPUT_REPODIR:-/repo}
 export INPUT_BUILDSRC=${INPUT_BUILDSRC:-/buildsrc}
+export INPUT_REPODIR=${INPUT_REPODIR:-/repo}
 
 # this is required to build some packages
 export SHELL=/bin/bash

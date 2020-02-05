@@ -3,7 +3,7 @@ set -e
 
 export REPONAME=geschenkerbauer
 export BUILDDIR=/build
-export PKGDEST=/repo
+export PKGDEST=$GITHUB_WORKSPACE/repo
 export SRCDEST=/srcdest
 export SRCPKGDEST=/srcpkgdest
 

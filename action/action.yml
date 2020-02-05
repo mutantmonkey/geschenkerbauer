@@ -6,6 +6,6 @@ inputs:
     required: true
 runs:
   using: docker
-  image: action/Dockerfile
+  image: Dockerfile
   args:
     - ${{ inputs.package }}

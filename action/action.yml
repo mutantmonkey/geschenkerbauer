@@ -1,11 +1,11 @@
 name: geschenkerbauer action
 description: Build Arch Linux packages
 inputs:
-  package:
-    description: Package to build
+  packages:
+    description: Packages to build (in order)
     required: true
 runs:
   using: docker
   image: Dockerfile
   args:
-    - ${{ inputs.package }}
+    - ${{ inputs.packages }}

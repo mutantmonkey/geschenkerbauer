@@ -34,8 +34,9 @@ function get_deptree_for_pkg {
 cd $GITHUB_WORKSPACE/buildsrc
 for mainpkg in $@; do
     for pkg in $(get_deptree_for_pkg $mainpkg); do
-        cd $pkg
+        pushd $pkg
         makepkg_args="-is --noconfirm $@"
         makepkg $makepkg_args
+        popd
     done
 done

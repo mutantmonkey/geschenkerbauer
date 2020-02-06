@@ -18,8 +18,24 @@ fi
 
 sudo pacman -Syu --noconfirm
 
-for pkg in $@; do
-    cd $GITHUB_WORKSPACE/buildsrc/$pkg
-    makepkg_args="-is --noconfirm $@"
-    makepkg $makepkg_args
+function get_deptree_for_pkg {
+    [ -f "$1/PKGBUILD" ] || return 1
+
+    pushd "$1" >/dev/null
+    deps="$(makepkg --printsrcinfo | grep -P '^\t(make)?depends' | sed 's/^[^\S=]\+ = \([^<>= ]\+\).*$/\1/g')"
+    popd >/dev/null
+
+    for dep in $deps; do
+        get_deptree_for_pkg "$dep"
+    done
+    echo "$1"
+}
+
+cd $GITHUB_WORKSPACE/buildsrc
+for mainpkg in $@; do
+    for pkg in $(get_deptree_for_pkg $mainpkg); do
+        cd $pkg
+        makepkg_args="-is --noconfirm $@"
+        makepkg $makepkg_args
+    done
 done

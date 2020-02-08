@@ -9,6 +9,7 @@ RUN set -x \
 COPY builduser-pacman /etc/sudoers.d/builduser-pacman
 RUN chmod 440 /etc/sudoers.d/builduser-pacman
 
+COPY makepkg.conf /etc/makepkg.conf
 COPY docker-entrypoint.sh /
 ENTRYPOINT ["/docker-entrypoint.sh"]
 

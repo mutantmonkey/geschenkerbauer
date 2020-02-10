@@ -14,7 +14,7 @@ for package in $(ls */PKGBUILD | sed 's/\/PKGBUILD$//g'); do
     git subtree pull -P "${package}" https://aur.archlinux.org/${package}.git master -m "Merge subtree '${package}'"
     if [[ -n "$(git diff --name-only master)" ]]; then
         if [ -n "$(git diff --name-only --diff-filter=U)" ]; then
-            echo "::warning Skipping ${package} due to merge conflicts"
+            echo "::warning::Skipping ${package} due to merge conflicts"
             git merge --abort
         else
             git push origin "${branch_name}"

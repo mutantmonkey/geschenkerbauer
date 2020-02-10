@@ -13,8 +13,13 @@ for package in $(ls */PKGBUILD | sed 's/\/PKGBUILD$//g'); do
     git checkout -B "${branch_name}"
     git subtree pull -P "${package}" https://aur.archlinux.org/${package}.git master -m "Merge subtree '${package}'"
     if [[ "$(git rev-parse "${branch_name}")" != "$(git rev-parse master)" ]]; then
-        git push origin "${branch_name}"
-        hub pull-request -m "Update ${package}" --no-edit
+        if [ -n "$(git diff --name-only --diff-filter=U)" ]; then
+            echo "::warning Skipping ${package} due to merge conflicts"
+            git merge --abort
+        else
+            git push origin "${branch_name}"
+            hub pull-request -m "Update ${package}" --no-edit
+        fi
         git checkout master
     fi
 done

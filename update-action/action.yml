@@ -1,0 +1,15 @@
+name: Check AUR for updates
+description: Check the AUR for updates to all packages in a repository
+inputs:
+  author_name:
+    description: Name used for Git command
+    required: true
+  author_email:
+    description: Email address used for Git command
+    required: true
+  github_token:
+    description: The GITHUB_TOKEN secret
+    required: true
+runs:
+  using: docker
+  image: Dockerfile

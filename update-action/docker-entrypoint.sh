@@ -6,6 +6,7 @@ git config user.name "${INPUT_AUTHOR_NAME}"
 git config user.email "${INPUT_AUTHOR_EMAIL}"
 git remote set-url origin "https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}"
 
+cd "${GITHUB_WORKSPACE}"
 for package in $(ls */PKGBUILD | sed 's/\/PKGBUILD$//g'); do
     export branch_name="aur-updates/${package}/$(date --utc +%s)"
 

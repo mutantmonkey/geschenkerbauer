@@ -10,6 +10,14 @@ unzip -d $OUTPUT_TMPDIR $1
 pushd $OUTPUT_TMPDIR >/dev/null
 
 for f in *.pkg.tar.*; do
+    # GitHub Actions forbids : in filenames, so the build action replaces them
+    # before creating the ZIP. Now that we have the file, rename it back.
+    if [[ "$f" == *"__3A__"* ]]; then
+        old_filename="$f"
+        f="${f/__3A__/:}"
+        mv "$old_filename" "$f"
+    fi
+
     if [ ! -f "$OUTPUT_REPO/$f" ]; then
         mv "$f" "$OUTPUT_REPO/$f"
         pushd "$OUTPUT_REPO" >/dev/null

@@ -35,6 +35,10 @@ cd "$GITHUB_WORKSPACE/buildsrc"
 
 if [[ "$INPUT_NODEPS" == "1" ]] || [[ "$INPUT_NODEPS" == "true" ]]; then
     echo "::warning::Dependency checking skipped"
+
+    # install git because some packages may need it to even download sources
+    sudo pacman -S --noconfirm git
+
     cd "$1"
     makepkg --noconfirm
 else

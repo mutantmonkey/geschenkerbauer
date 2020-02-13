@@ -36,7 +36,7 @@ cd "$GITHUB_WORKSPACE/buildsrc"
 if [[ "$INPUT_NODEPS" == "1" ]] || [[ "$INPUT_NODEPS" == "true" ]]; then
     echo "::warning::Dependency checking skipped"
     cd "$1"
-    makepkg
+    makepkg --noconfirm
 else
     for mainpkg in "$@"; do
         for pkg in $(get_deptree_for_pkg "$mainpkg"); do

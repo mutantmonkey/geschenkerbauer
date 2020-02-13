@@ -3,7 +3,7 @@ set -e
 
 export REPONAME=geschenkerbauer
 export BUILDDIR=/build
-export PKGDEST=$GITHUB_WORKSPACE/repo
+export PKGDEST="$GITHUB_WORKSPACE/repo"
 export SRCDEST=/srcdest
 export SRCPKGDEST=/srcpkgdest
 export HOME=/build
@@ -31,12 +31,18 @@ function get_deptree_for_pkg {
     echo "$1"
 }
 
-cd $GITHUB_WORKSPACE/buildsrc
-for mainpkg in $@; do
-    for pkg in $(get_deptree_for_pkg $mainpkg); do
-        pushd $pkg
-        makepkg_args="-is --noconfirm $@"
-        makepkg $makepkg_args
-        popd
+cd "$GITHUB_WORKSPACE/buildsrc"
+
+if [[ "$INPUT_NODEPS" == "1" ]] || [[ "$INPUT_NODEPS" == "true" ]]; then
+    echo "::warning::Dependency checking skipped"
+    cd "$1"
+    makepkg
+else
+    for mainpkg in "$@"; do
+        for pkg in $(get_deptree_for_pkg "$mainpkg"); do
+            pushd "$pkg"
+            makepkg -is --noconfirm
+            popd
+        done
     done
-done
+fi

@@ -40,7 +40,7 @@ if [[ "$INPUT_NODEPS" == "1" ]] || [[ "$INPUT_NODEPS" == "true" ]]; then
     sudo pacman -S --noconfirm git
 
     cd "$1"
-    makepkg --noconfirm
+    makepkg --nodeps --noconfirm
 else
     for mainpkg in "$@"; do
         for pkg in $(get_deptree_for_pkg "$mainpkg"); do

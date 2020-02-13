@@ -40,6 +40,8 @@ group.add_argument('--build', action='store_true',
                    help="Build the specified package(s)")
 group.add_argument('--check-updates', action='store_true',
                    help="Check the AUR for package updates")
+parser.add_argument('--nodeps', action='store_true',
+                    help="Disable dependency checking when building")
 parser.add_argument('pkgname', nargs='*')
 args = parser.parse_args()
 
@@ -57,7 +59,11 @@ dispatcher = GitHubEventDispatcher('mutantmonkey', 'aur', gh_auth)
 
 if args.build:
     for pkgname in args.pkgname:
-        r = dispatcher.dispatch('build-package', {'pkgname': pkgname})
+        data = {'pkgname': pkgname}
+        if args.nodeps:
+            data['nodeps'] = "1"
+
+        r = dispatcher.dispatch('build-package', data)
         if r.status_code == 204:
             print("Build for {0} triggered".format(pkgname), file=sys.stderr)
         else:

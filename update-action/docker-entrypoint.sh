@@ -12,7 +12,9 @@ cd "${GITHUB_WORKSPACE}" || exit 1
 declare -A branch_by_package
 while IFS=$'\n' read -ra line; do
     read -ra entry <<< "${line/,Update/ }"
-    branch_by_package+=([${entry[0]}]=${entry[2]})
+    if [[ -n "${entry[0]}" ]] && [[ -n "${entry[2]}" ]]; then
+        branch_by_package+=([${entry[0]}]=${entry[2]})
+    fi
 done <<< "$(hub pr list -f '%I,%t %H%n')"
 
 for package in $(find -- */PKGBUILD | sed 's/\/PKGBUILD$//g'); do

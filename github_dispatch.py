@@ -40,6 +40,8 @@ group.add_argument('--build', action='store_true',
                    help="Build the specified package(s)")
 group.add_argument('--check-updates', action='store_true',
                    help="Check the AUR for package updates")
+group.add_argument('--check-upstream-updates', action='store_true',
+                   help="Check upstream for package updates")
 parser.add_argument('--nodeps', action='store_true',
                     help="Disable dependency checking when building")
 parser.add_argument('pkgname', nargs='*')
@@ -79,6 +81,21 @@ elif args.check_updates:
             file=sys.stderr)
 
     r = dispatcher.dispatch('check-aur-for-updates')
+    if r.status_code == 204:
+        print("Update check triggered", file=sys.stderr)
+    else:
+        print(
+            "Update check returned unknown status code {0}".format(
+                r.status_code),
+            file=sys.stderr)
+elif args.check_upstream_updates:
+    if len(args.pkgname) > 0:
+        print(
+            "Limiting the update check by package name is not supported; all "
+            "packages will be checked.",
+            file=sys.stderr)
+
+    r = dispatcher.dispatch('check-upstream-for-updates')
     if r.status_code == 204:
         print("Update check triggered", file=sys.stderr)
     else:

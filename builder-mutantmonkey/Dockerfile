@@ -7,7 +7,7 @@ RUN pacman-key --init && pacman-key --populate archlinux
 
 COPY --chown=1000 sha512sums.txt /tmp/
 RUN cd /tmp \
-        && curl -O https://deadbeef.ninja/archlinux-user/mutantmonkey/os/x86_64/mutantmonkey-keyring-$MMKEYRING_VERSION-1-any.pkg.tar.xz \
+        && curl -O https://deadbeef.ninja/archlinux-user/mutantmonkey/os/x86_64/mutantmonkey-keyring-$MMKEYRING_VERSION-1-any.pkg.tar.zst \
         && sha512sum -c sha512sums.txt \
         && sudo pacman --noconfirm -U mutantmonkey-keyring-$MMKEYRING_VERSION-1-any.pkg.tar.xz \
         && rm mutantmonkey-keyring-$MMKEYRING_VERSION-1-any.pkg.tar.xz sha512sums.txt

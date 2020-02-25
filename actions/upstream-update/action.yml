@@ -1,0 +1,18 @@
+name: Check upstream for updates
+description: Check upstream for updates to the specified packages
+inputs:
+  author_name:
+    description: Name used for Git command
+    required: true
+  author_email:
+    description: Email address used for Git command
+    required: true
+  github_token:
+    description: The GITHUB_TOKEN secret
+    required: true
+  pypi_packages:
+    description: A list of newline-separated Arch packages to update mapped to the upstream PyPI package
+    required: true
+runs:
+  using: docker
+  image: Dockerfile

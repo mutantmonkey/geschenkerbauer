@@ -16,6 +16,11 @@ if [[ -n "$GNUPG_PUBKEYRING" ]]; then
     gpg2 --import "$GNUPG_PUBKEYRING"
 fi
 
+# unify timestamps so builds can be reproducible
+if [[ ! -v SOURCE_DATE_EPOCH ]]; then
+	export SOURCE_DATE_EPOCH=$(date +%s)
+fi
+
 sudo pacman -Syu --noconfirm
 
 function get_deptree_for_pkg {

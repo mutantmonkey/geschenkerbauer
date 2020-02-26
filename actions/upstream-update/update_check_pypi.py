@@ -188,3 +188,8 @@ Upstream release on PyPI (automatic update)
                 })
             result = r.json()
             print(result['html_url'])
+
+        subprocess.run(
+            ["git", "checkout", "master"],
+            cwd=pkgdir,
+            check=True)

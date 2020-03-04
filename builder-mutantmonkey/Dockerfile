@@ -10,7 +10,7 @@ RUN cd /tmp \
         && curl -O https://deadbeef.ninja/archlinux-user/mutantmonkey/os/x86_64/mutantmonkey-keyring-$MMKEYRING_VERSION-1-any.pkg.tar.zst \
         && sha512sum -c sha512sums.txt \
         && sudo pacman --noconfirm -U mutantmonkey-keyring-$MMKEYRING_VERSION-1-any.pkg.tar.xz \
-        && rm mutantmonkey-keyring-$MMKEYRING_VERSION-1-any.pkg.tar.xz sha512sums.txt
+        && rm mutantmonkey-keyring-$MMKEYRING_VERSION-1-any.pkg.tar.xz sha512sums.txt \
         && rm -rf etc/pacman.d/gnupg/{openpgp-revocs.d/,private-keys-v1.d/,pugring.gpg~,gnupg.S.}*
 
 USER root

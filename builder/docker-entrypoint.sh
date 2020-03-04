@@ -23,6 +23,11 @@ fi
 # create an empty repo database if one does not exist
 [ -e $INPUT_REPODIR/$REPONAME.db ] || touch $INPUT_REPODIR/$REPONAME.db
 
+# unify timestamps so builds can be reproducible
+if [[ ! -v SOURCE_DATE_EPOCH ]]; then
+	export SOURCE_DATE_EPOCH=$(date +%s)
+fi
+
 sudo pacman -Syu --noconfirm
 
 cd $(mktemp -d /var/tmp/buildsrc-XXXXXXXXXX)

@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 export GITHUB_USER="${GITHUB_ACTOR}"
 export GITHUB_TOKEN="${INPUT_GITHUB_TOKEN}"
 

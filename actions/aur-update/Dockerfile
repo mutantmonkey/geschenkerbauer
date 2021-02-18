@@ -1,9 +1,8 @@
-FROM archlinux:latest
+FROM debian:buster
 
 # This is not a typo; we need git and hub, which are separate tools
 RUN set -x \
-        && pacman -Syu --noconfirm \
-        && pacman -S --noconfirm git hub
+        && apt install -y git hub
 
 COPY docker-entrypoint.sh /
 ENTRYPOINT ["/docker-entrypoint.sh"]

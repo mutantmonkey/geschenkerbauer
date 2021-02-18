@@ -1,9 +1,6 @@
-FROM archlinux:latest
+FROM archlinux:base-devel
 
 RUN set -x \
-        && pacman -Syu --noconfirm \
-        && pacman -S --noconfirm filesystem \
-        && pacman -S --noconfirm base-devel \
         && useradd -m -g users -u 1000 builduser \
         && install -d -o builduser -g users /build /srcdest /srcpkgdest /logdest
 

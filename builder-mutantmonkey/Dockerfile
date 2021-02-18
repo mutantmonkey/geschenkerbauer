@@ -1,9 +1,9 @@
 FROM mutantmonkey/geschenkerbauer:latest
 
-ENV MMKEYRING_VERSION 20170105
+ENV MMKEYRING_VERSION 20200223
 
 # reinitialize the pacman keyring
-RUN pacman-key --init && pacman-key --populate archlinux
+RUN sudo pacman-key --init && sudo pacman-key --populate archlinux
 
 COPY --chown=1000 sha512sums.txt /tmp/
 RUN cd /tmp \

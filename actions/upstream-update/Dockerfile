@@ -1,8 +1,8 @@
-FROM archlinux:latest
+FROM archlinux:base-devel
 
 RUN set -x \
         && pacman -Syu --noconfirm \
-        && pacman -S --noconfirm base-devel git python python-requests \
+        && pacman -S --noconfirm git python python-requests \
         && useradd -m -g users -u 1000 builduser
 
 COPY docker-entrypoint.sh /

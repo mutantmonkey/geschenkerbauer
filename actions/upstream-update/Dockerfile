@@ -1,9 +1,7 @@
-FROM archlinux:base-devel
+FROM python:3
 
 RUN set -x \
-        && pacman -Syu --noconfirm \
-        && pacman -S --noconfirm git python python-requests \
-        && useradd -m -g users -u 1000 builduser
+        && pip install --no-cache-dir requests
 
 COPY docker-entrypoint.sh /
 COPY update_check_pypi.py /

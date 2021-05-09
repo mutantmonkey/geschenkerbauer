@@ -23,12 +23,14 @@ fi
 
 sudo pacman -Syu --noconfirm
 
-function get_deptree_for_pkg {
-    [ -f "$1/PKGBUILD" ] || return 1
+# create associate array that we will use for mapping pkgname to pkgbase
+declare -A pkgname_to_pkgbase
 
-    pushd "$1" >/dev/null
-    deps="$(makepkg --printsrcinfo | grep -P '^\t(make)?depends' | sed 's/^[^\S=]\+ = \([^<>= ]\+\).*$/\1/g')"
-    popd >/dev/null
+function get_deptree_for_pkg {
+    srcinfo="${pkgname_to_pkgbase["$1"]}/.SRCINFO"
+    [ -f "$srcinfo" ] || return 1
+
+    deps="$(grep -P '^\t(make)?depends' "$srcinfo" | sed 's/^[^\S=]\+ = \([^<>= ]\+\).*$/\1/g')"
 
     for dep in $deps; do
         get_deptree_for_pkg "$dep"
@@ -47,9 +49,18 @@ if [[ "$INPUT_NODEPS" == "1" ]] || [[ "$INPUT_NODEPS" == "true" ]]; then
     cd "$1"
     makepkg --nodeps --noconfirm
 else
+    # inspect packages in the current directory and populate the
+    # pkgname_to_pkgbase associative array
+    for srcinfo in */.SRCINFO; do
+        pkgbase=${srcinfo/\/.SRCINFO/}
+        for pkgname in $(grep -P '^pkgname' "$srcinfo" | sed 's/^[^\S=]\+ = \([^<>= ]\+\).*$/\1/g'); do
+            pkgname_to_pkgbase["$pkgname"]="$pkgbase"
+        done
+    done
+
     for mainpkg in "$@"; do
         for pkg in $(get_deptree_for_pkg "$mainpkg"); do
-            pushd "$pkg"
+            pushd "${pkgname_to_pkgbase["$pkg"]}"
             makepkg -is --noconfirm
             popd
         done

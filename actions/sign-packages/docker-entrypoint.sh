@@ -1,5 +1,4 @@
 #!/usr/bin/bash
-set -e
 
 install -d -m 0700 /tmp/signify
 echo "$INPUT_SIGNIFY_SECRET_KEY" > /tmp/signify/pkg.sec

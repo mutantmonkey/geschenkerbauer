@@ -25,7 +25,7 @@ for f in *.pkg.tar.*; do
 
     # Use signify public key, if provided, to verify packages
     if [ -n "$SIGNIFY_PUBLIC_KEY" ]; then
-        signify -C -p "$SIGNIFY_PUBLIC_KEY" -x SHA512.sig $f
+        signify -C -p "$SIGNIFY_PUBLIC_KEY" -x SHA512.sig "$f"
         if [ $? -ne 0 ]; then
             break
         fi

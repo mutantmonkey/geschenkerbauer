@@ -1,0 +1,12 @@
+name: sign packages action
+description: Sign Arch Linux packages in the repo directory of the workspace
+inputs:
+  signify_secret_key:
+    description: Secret key for signify
+    required: true
+  signify_password:
+    description: Password for signify
+    required: true
+runs:
+  using: docker
+  image: Dockerfile

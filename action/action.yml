@@ -4,6 +4,9 @@ inputs:
   packages:
     description: Packages to build (in order)
     required: true
+  nodeps:
+    description: Skip dependency checks when building
+    required: false
 runs:
   using: docker
   image: Dockerfile

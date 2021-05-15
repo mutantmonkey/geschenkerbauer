@@ -43,7 +43,7 @@ group.add_argument('--check-updates', action='store_true',
 group.add_argument('--check-upstream-updates', action='store_true',
                    help="Check upstream for package updates")
 parser.add_argument('--nodeps', action='store_true',
-                    help="Disable dependency checking when building")
+                    help="Skip dependency checks when building")
 parser.add_argument('pkgname', nargs='*')
 args = parser.parse_args()
 

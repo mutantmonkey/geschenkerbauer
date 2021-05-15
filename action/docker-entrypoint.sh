@@ -52,7 +52,7 @@ else
     # inspect packages in the current directory and populate the
     # pkgname_to_pkgbase associative array
     for srcinfo in */.SRCINFO; do
-        pkgbase=${srcinfo/\/.SRCINFO/}
+        pkgbase="${srcinfo/\/.SRCINFO/}"
         for pkgname in $(grep -P '^pkgname' "$srcinfo" | sed 's/^[^\S=]\+ = \([^<>= ]\+\).*$/\1/g'); do
             pkgname_to_pkgbase["$pkgname"]="$pkgbase"
         done
@@ -60,9 +60,12 @@ else
 
     for mainpkg in "$@"; do
         for pkg in $(get_deptree_for_pkg "$mainpkg"); do
-            pushd "${pkgname_to_pkgbase["$pkg"]}"
+            pkgbase="${pkgname_to_pkgbase["$pkg"]}"
+            echo "::group::${pkgbase}"
+            pushd "${pkgbase}"
             makepkg -is --noconfirm
             popd
+            echo "::endgroup::"
         done
     done
 fi

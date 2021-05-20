@@ -42,6 +42,8 @@ group.add_argument('--check-updates', action='store_true',
                    help="Check the AUR for package updates")
 group.add_argument('--check-upstream-updates', action='store_true',
                    help="Check upstream for package updates")
+group.add_argument('--update-from-aur', action='store_true',
+                   help="Update the specified packages from the AUR")
 parser.add_argument('--nodeps', action='store_true',
                     help="Skip dependency checks when building")
 parser.add_argument('pkgname', nargs='*')
@@ -103,3 +105,13 @@ elif args.check_upstream_updates:
             "Update check returned unknown status code {0}".format(
                 r.status_code),
             file=sys.stderr)
+elif args.update_from_aur:
+    for pkgname in args.pkgname:
+        r = dispatcher.dispatch('update-from-aur', {"pkgbase": pkgname})
+        if r.status_code == 204:
+            print("Update for {0} triggered".format(pkgname), file=sys.stderr)
+        else:
+            print(
+                "Update for {0} returned unknown status code {1}".format(
+                    pkgname, r.status_code),
+                file=sys.stderr)

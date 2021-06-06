@@ -1,15 +1,33 @@
-name: Check AUR for updates
-description: Check the AUR for updates to all packages in a repository
+name: Update a package from the AUR
+description: Update a package from the AUR
 inputs:
-  author_name:
-    description: Name used for Git command
+  pkgbase:
+    description: "Package base name"
     required: true
-  author_email:
-    description: Email address used for Git command
+  git_user_name:
+    description: Name to use for Git
     required: true
-  github_token:
-    description: The GITHUB_TOKEN secret
+  git_user_email:
+    description: Email address to use for Git
     required: true
 runs:
-  using: docker
-  image: Dockerfile
+  using: composite
+  steps:
+    - name: Change default shell to bash
+      run: |
+        sudo ln -sf /bin/bash /bin/sh
+    - name: Pull subtree from AUR
+      env:
+        git_user_name: ${{ inputs.git_user_name }}
+        git_user_email: ${{ inputs.git_user_email }}
+        pkgbase: ${{ inputs.pkgbase }}
+      run: |
+        git config --local user.name "${git_user_name}"
+        git config --local user.email "${git_user_email}"
+
+        if [ -d "${pkgbase}" ]; then
+          git subtree split -q -P "${pkgbase}" --rejoin
+          git subtree pull -q -P "${pkgbase}" https://aur.archlinux.org/"${pkgbase}".git master -m "Merge subtree '${pkgbase}'"
+        else
+          git subtree add -q -P "${pkgbase}" https://aur.archlinux.org/"${pkgbase}".git master
+        fi

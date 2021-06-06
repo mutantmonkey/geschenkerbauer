@@ -14,9 +14,11 @@ runs:
   using: composite
   steps:
     - name: Change default shell to bash
+      shell: bash
       run: |
         sudo ln -sf /bin/bash /bin/sh
     - name: Pull subtree from AUR
+      shell: bash
       env:
         git_user_name: ${{ inputs.git_user_name }}
         git_user_email: ${{ inputs.git_user_email }}

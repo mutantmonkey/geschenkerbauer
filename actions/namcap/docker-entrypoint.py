@@ -23,7 +23,7 @@ for pkgbuild in glob.glob("*/PKGBUILD"):
             severity = "debug"
 
         print(
-            "::{severity} file={pkgbuild}::{message}".format(
+            "::{severity} file={pkgbuild},line=0,col=0::{message}".format(
                 severity=severity, pkgbuild=pkgbuild, message=m.group("message")
             )
         )

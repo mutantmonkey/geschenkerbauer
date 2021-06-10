@@ -1,0 +1,5 @@
+name: Check with namcap
+description: Check all PKGBUILDs using namcap
+runs:
+  using: docker
+  image: Dockerfile

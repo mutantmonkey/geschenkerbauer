@@ -11,7 +11,7 @@ line_re = re.compile(
 num_errors = 0
 
 for pkgbuild in glob.glob("*/PKGBUILD"):
-    output = subprocess.check_output(["namcap", pkgbuild])
+    output = subprocess.check_output(["namcap", "-e", "carch,pkgnameindesc", pkgbuild])
     for line in output.splitlines():
         m = line_re.match(line.decode("utf-8"))
         if m.group("severity") == "E":

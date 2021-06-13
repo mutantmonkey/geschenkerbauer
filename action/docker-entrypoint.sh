@@ -33,7 +33,10 @@ function get_deptree_for_pkg {
     deps="$(grep -P '^\t(make)?depends' "$srcinfo" | sed 's/^[^\S=]\+ = \([^<>= ]\+\).*$/\1/g')"
 
     for dep in $deps; do
-        get_deptree_for_pkg "$dep"
+        # check that dep is a different package to prevent infinite recursion
+        if [[ "$dep" != "$1" ]]; then
+            get_deptree_for_pkg "$dep"
+        fi
     done
     echo "$1"
 }

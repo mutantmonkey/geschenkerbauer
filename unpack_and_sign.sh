@@ -41,7 +41,7 @@ for f in *.pkg.tar.*; do
         # sha256sum of the current PKGBUILD in our local source directory
         if [ -n "$SOURCE_PATH" ]; then
             pkgbase=$(tar --force-local -xOf "$f" .BUILDINFO | grep '^pkgbase' | sed 's/^.* = //g')
-            expected_sha256sum=$(tar -xOf "$f" .BUILDINFO | grep '^pkgbuild_sha256sum' | sed 's/^.* = //g')
+            expected_sha256sum=$(tar --force-local -xOf "$f" .BUILDINFO | grep '^pkgbuild_sha256sum' | sed 's/^.* = //g')
             actual_sha256sum=$(sha256sum "${SOURCE_PATH}/${pkgbase}/PKGBUILD" | cut -f1 -d ' ')
 
             # If the sha256sum doesn't match the first time, try adjusting pkgver to match

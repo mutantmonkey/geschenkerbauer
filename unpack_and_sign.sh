@@ -9,31 +9,24 @@ OUTPUT_TMPDIR=$(mktemp -d)
 unzip -d $OUTPUT_TMPDIR $1
 pushd $OUTPUT_TMPDIR >/dev/null
 
-# Warn if no signify public key is provided
-if [ -z "$SIGNIFY_PUBLIC_KEY" ]; then
-    echo "No signify public key provided, signature checks will be skipped."
-fi
-
 # Warn if no source directory is provided
 if [ -z "$SOURCE_PATH" ]; then
     echo "No source directory provided, PKGBUILD integrity checking will be skipped."
 fi
 
 for f in *.pkg.tar.*; do
+    # Verify attestation
+    gh attestation verify "$f" -R mutantmonkey/aur
+    if [ $? -ne 0 ]; then
+        break
+    fi
+
     # GitHub Actions forbids : in filenames, so the build action replaces them
     # before creating the ZIP. Now that we have the file, rename it back.
     if [[ "$f" == *"__3A__"* ]]; then
         old_filename="$f"
         f="${f/__3A__/:}"
         mv "$old_filename" "$f"
-    fi
-
-    # Use signify public key, if provided, to verify packages
-    if [ -n "$SIGNIFY_PUBLIC_KEY" ]; then
-        signify -C -p "$SIGNIFY_PUBLIC_KEY" -x SHA512.sig "$f"
-        if [ $? -ne 0 ]; then
-            break
-        fi
     fi
 
     if [ ! -f "$OUTPUT_REPO/$f" ]; then

@@ -17,7 +17,7 @@ import (
 	"github.com/google/go-github/v62/github"
 )
 
-func processArtifact(filename string, repo string) error {
+func processArtifact(filename string, repo string, outputDir string, dbname string, keyring string) error {
 	// create temporary destination directory
 	dir, err := os.MkdirTemp("", "geschenkerbauer")
 	if err != nil {
@@ -45,13 +45,19 @@ func processArtifact(filename string, repo string) error {
 
 		destFilename := filepath.Base(filepath.Clean(f.Name))
 
-		// GitHub Actions forbids : in filenames, so the build action
+		// GitHub Actions forbids : in filenames, so the build workflow
 		// replaces them before creating the ZIP. We need to replace
 		// them back in the filename before creating the file.
 		destFilename = strings.ReplaceAll(destFilename, "__3A__", ":")
 
 		destFilepath := filepath.Join(dir, destFilename)
 		fmt.Printf("%s\n", destFilepath)
+
+		// skip packages that already exist in the output directory
+		if _, err := os.Stat(filepath.Join(outputDir, destFilename)); err == nil {
+			log.Printf("Warning: skipping %q because it already exists in the output directory", destFilename)
+			continue
+		}
 
 		df, err := os.Create(destFilepath)
 		if err != nil {
@@ -82,32 +88,28 @@ func processArtifact(filename string, repo string) error {
 			return err
 		}
 
-		// GitHub Actions forbids : in filenames, so the build action
-		// replaces them before creating the ZIP. Now that we have the
-		// file, rename it back.
-		/*newFilename := strings.ReplaceAll(destFilename, "__3A__", ":")
-		newFilepath := filepath.Join(dir, newFilename)
-		if err := os.Rename(destFilepath, newFilepath); err != nil {
+		if err := signPackage(destFilepath, keyring); err != nil {
 			return err
-		}*/
+		}
 
-		// TODO: sign - can this be done in pure Go?
-		// 	* golang.org/x/crypto/openpgp
-		/*if err := signPackage(destFilepath); err != nil {
+		// move package signature to final output directory
+		if err := os.Rename(destFilepath+".sig", filepath.Join(outputDir, destFilename+".sig")); err != nil {
 			return err
-		}*/
+		}
 
-		// TODO: copy output files (including signatures) to repository
-		//	* could consider using os.Rename
+		// move package to final output directory
+		if err := os.Rename(destFilepath, filepath.Join(outputDir, destFilename)); err != nil {
+			return err
+		}
 
-		// TODO: call repo-add
-		// 	* it's just a shell script, so may want to rewrite in Go
+		// add new packages to repository database
+		// TODO: it would be nice if I could do this in pure Go
+		cmd = exec.Command("repo-add", dbname, destFilename)
+		cmd.Dir = outputDir
+		if err := cmd.Run(); err != nil {
+			return err
+		}
 	}
-
-	/*unpackCmd := exec.Command("bash", "../unpack_and_sign.sh", f.Name())
-	if err := unpackCmd.Run(); err != nil {
-		return err
-	}*/
 
 	return nil
 }
@@ -132,6 +134,9 @@ func main() {
 	// TODO: accept these as flags? or parse from config?
 	owner := "mutantmonkey"
 	repo := "aur"
+	outputDir := "/tmp/tmp.SgCL7e8sSK"
+	dbname := "repo.db.tar.gz"
+	keyring := "keyring.gpg"
 
 	client := github.NewClient(nil).WithAuthToken(token)
 
@@ -194,7 +199,7 @@ func main() {
 			}
 
 			ghRepo := fmt.Sprintf("%s/%s", owner, repo)
-			if err := processArtifact(f.Name(), ghRepo); err != nil {
+			if err := processArtifact(f.Name(), ghRepo, outputDir, dbname, keyring); err != nil {
 				log.Fatal(err)
 			}
 		}

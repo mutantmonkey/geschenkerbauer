@@ -204,6 +204,11 @@ func main() {
 	flag.StringVar(&workflowName, "workflow", "", "Basename of workflow file")
 	flag.Parse()
 
+	if configPath == "" {
+		// TODO: this should use a default path if one is not specified
+		log.Fatal("The -config option is required.")
+	}
+
 	// TODO: parse this from a config file
 	cmd := exec.Command("gh", "auth", "token")
 	output, err := cmd.Output()
@@ -216,7 +221,6 @@ func main() {
 		SkipRepoAdd: true,
 	}
 
-	// TODO: need a default config path
 	if _, err = toml.DecodeFile(configPath, &config); err != nil {
 		log.Fatal(err)
 	}

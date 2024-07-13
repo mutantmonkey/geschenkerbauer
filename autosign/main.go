@@ -25,6 +25,7 @@ type Config struct {
 	DbName      string
 	Keyring     string
 	SkipRepoAdd bool
+	AuthToken   string
 }
 
 func moveFile(oldpath string, newpath string) error {
@@ -209,19 +210,11 @@ func main() {
 		log.Fatal("The -config option is required.")
 	}
 
-	// TODO: parse this from a config file
-	cmd := exec.Command("gh", "auth", "token")
-	output, err := cmd.Output()
-	if err != nil {
-		log.Fatal(err)
-	}
-	token := strings.TrimSpace(string(output))
-
 	config := Config{
 		SkipRepoAdd: true,
 	}
 
-	if _, err = toml.DecodeFile(configPath, &config); err != nil {
+	if _, err := toml.DecodeFile(configPath, &config); err != nil {
 		log.Fatal(err)
 	}
 
@@ -234,7 +227,7 @@ func main() {
 		minCreatedAt = minCreatedAt.Add(-duration)
 	}
 
-	client := github.NewClient(nil).WithAuthToken(token)
+	client := github.NewClient(nil).WithAuthToken(config.AuthToken)
 
 	if workflowName != "" {
 		runs, _, err := client.Actions.ListWorkflowRunsByFileName(context.Background(), config.Owner, config.Repo, workflowName, nil)

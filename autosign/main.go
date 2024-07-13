@@ -17,7 +17,58 @@ import (
 	"github.com/google/go-github/v62/github"
 )
 
-func processArtifact(filename string, repo string, outputDir string, dbname string, keyring string) error {
+type Config struct {
+	Owner     string
+	Repo      string
+	OutputDir string
+	DbName    string
+	Keyring   string
+}
+
+func processWorkflowRun(client *github.Client, run *github.WorkflowRun, config Config) error {
+	artifacts, _, err := client.Actions.ListWorkflowRunArtifacts(context.Background(), config.Owner, config.Repo, run.GetID(), nil)
+	if err != nil {
+		return err
+	}
+	for _, artifact := range artifacts.Artifacts {
+		fmt.Printf("Processing artifact: %s (%d)\n", artifact.GetName(), artifact.GetID())
+
+		url, _, err := client.Actions.DownloadArtifact(context.Background(), config.Owner, config.Repo, artifact.GetID(), 1)
+		if err != nil {
+			return err
+		}
+
+		f, err := os.CreateTemp("", "*.zip")
+		if err != nil {
+			return err
+		}
+		defer os.Remove(f.Name())
+
+		resp, err := http.Get(url.String())
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		if _, err := io.Copy(f, resp.Body); err != nil {
+			return err
+		}
+
+		if err := f.Close(); err != nil {
+			return err
+		}
+
+		if err := processArtifact(f.Name(), config); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func processArtifact(filename string, config Config) error {
+	repo := fmt.Sprintf("%s/%s", config.Owner, config.Repo)
+
 	// create temporary destination directory
 	dir, err := os.MkdirTemp("", "geschenkerbauer")
 	if err != nil {
@@ -54,7 +105,7 @@ func processArtifact(filename string, repo string, outputDir string, dbname stri
 		fmt.Printf("%s\n", destFilepath)
 
 		// skip packages that already exist in the output directory
-		if _, err := os.Stat(filepath.Join(outputDir, destFilename)); err == nil {
+		if _, err := os.Stat(filepath.Join(config.OutputDir, destFilename)); err == nil {
 			log.Printf("Warning: skipping %q because it already exists in the output directory", destFilename)
 			continue
 		}
@@ -88,24 +139,24 @@ func processArtifact(filename string, repo string, outputDir string, dbname stri
 			return err
 		}
 
-		if err := signPackage(destFilepath, keyring); err != nil {
+		if err := signPackage(destFilepath, config.Keyring); err != nil {
 			return err
 		}
 
 		// move package signature to final output directory
-		if err := os.Rename(destFilepath+".sig", filepath.Join(outputDir, destFilename+".sig")); err != nil {
+		if err := os.Rename(destFilepath+".sig", filepath.Join(config.OutputDir, destFilename+".sig")); err != nil {
 			return err
 		}
 
 		// move package to final output directory
-		if err := os.Rename(destFilepath, filepath.Join(outputDir, destFilename)); err != nil {
+		if err := os.Rename(destFilepath, filepath.Join(config.OutputDir, destFilename)); err != nil {
 			return err
 		}
 
 		// add new packages to repository database
 		// TODO: it would be nice if I could do this in pure Go
-		cmd = exec.Command("repo-add", dbname, destFilename)
-		cmd.Dir = outputDir
+		cmd = exec.Command("repo-add", config.DbName, destFilename)
+		cmd.Dir = config.OutputDir
 		if err := cmd.Run(); err != nil {
 			return err
 		}
@@ -131,17 +182,19 @@ func main() {
 	}
 	token := strings.TrimSpace(string(output))
 
-	// TODO: accept these as flags? or parse from config?
-	owner := "mutantmonkey"
-	repo := "aur"
-	outputDir := "/tmp/tmp.SgCL7e8sSK"
-	dbname := "repo.db.tar.gz"
-	keyring := "keyring.gpg"
+	// TODO: accept these as flags? or parse from config file?
+	config := Config{
+		Owner:     "mutantmonkey",
+		Repo:      "aur",
+		OutputDir: "/tmp/tmp.SgCL7e8sSK",
+		DbName:    "repo.db.tar.gz",
+		Keyring:   "keyring.gpg",
+	}
 
 	client := github.NewClient(nil).WithAuthToken(token)
 
 	// TODO: should I also support running without specifying a workflow? or is that not needed?
-	runs, _, err := client.Actions.ListWorkflowRunsByFileName(context.Background(), owner, repo, workflowName, nil)
+	runs, _, err := client.Actions.ListWorkflowRunsByFileName(context.Background(), config.Owner, config.Repo, workflowName, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -165,43 +218,6 @@ func main() {
 		}
 
 		fmt.Printf("Processing workflow run: %s #%d\n", run.GetName(), run.GetID())
-
-		artifacts, _, err := client.Actions.ListWorkflowRunArtifacts(context.Background(), owner, repo, run.GetID(), nil)
-		if err != nil {
-			log.Fatal(err)
-		}
-		for _, artifact := range artifacts.Artifacts {
-			fmt.Printf("Processing artifact: %s (%d)\n", artifact.GetName(), artifact.GetID())
-
-			url, _, err := client.Actions.DownloadArtifact(context.Background(), owner, repo, artifact.GetID(), 1)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			f, err := os.CreateTemp("", "*.zip")
-			if err != nil {
-				log.Fatal(err)
-			}
-			defer os.Remove(f.Name())
-
-			resp, err := http.Get(url.String())
-			if err != nil {
-				log.Fatal(err)
-			}
-			defer resp.Body.Close()
-
-			if _, err := io.Copy(f, resp.Body); err != nil {
-				log.Fatal(err)
-			}
-
-			if err := f.Close(); err != nil {
-				log.Fatal(err)
-			}
-
-			ghRepo := fmt.Sprintf("%s/%s", owner, repo)
-			if err := processArtifact(f.Name(), ghRepo, outputDir, dbname, keyring); err != nil {
-				log.Fatal(err)
-			}
-		}
+		processWorkflowRun(client, run, config)
 	}
 }

@@ -14,7 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/go-github/v62/github"
+	"github.com/BurntSushi/toml"
+	"github.com/google/go-github/v63/github"
 )
 
 type Config struct {
@@ -24,6 +25,32 @@ type Config struct {
 	DbName      string
 	Keyring     string
 	SkipRepoAdd bool
+}
+
+func moveFile(oldpath string, newpath string) error {
+	srcFile, err := os.Open(oldpath)
+	if err != nil {
+		return fmt.Errorf("Could not open source file: %s", err)
+	}
+
+	destFile, err := os.Create(newpath)
+	if err != nil {
+		return fmt.Errorf("Could not open destination file: %s", err)
+	}
+	defer destFile.Close()
+
+	_, err = io.Copy(destFile, srcFile)
+	srcFile.Close()
+	if err != nil {
+		return fmt.Errorf("Could not write to destination file: %s", err)
+	}
+
+	// Remove original file
+	if err := os.Remove(oldpath); err != nil {
+		return fmt.Errorf("Could not remove original file: %s", err)
+	}
+
+	return nil
 }
 
 func processWorkflowRun(client *github.Client, run *github.WorkflowRun, config Config) error {
@@ -36,31 +63,29 @@ func processWorkflowRun(client *github.Client, run *github.WorkflowRun, config C
 
 		url, _, err := client.Actions.DownloadArtifact(context.Background(), config.Owner, config.Repo, artifact.GetID(), 1)
 		if err != nil {
-			return err
+			return fmt.Errorf("Could not download artifact: %s", err)
 		}
 
 		f, err := os.CreateTemp("", "*.zip")
 		if err != nil {
-			return err
+			return fmt.Errorf("Could not create temporary file: %s", err)
 		}
 		defer os.Remove(f.Name())
 
 		resp, err := http.Get(url.String())
 		if err != nil {
-			return err
+			return fmt.Errorf("Could not download file: %s", err)
 		}
 		defer resp.Body.Close()
 
-		if _, err := io.Copy(f, resp.Body); err != nil {
-			return err
-		}
-
-		if err := f.Close(); err != nil {
-			return err
+		_, err = io.Copy(f, resp.Body)
+		f.Close()
+		if err != nil {
+			return fmt.Errorf("Could not write to destination file: %s", err)
 		}
 
 		if err := processArtifact(f.Name(), config); err != nil {
-			return err
+			return fmt.Errorf("Could not process artifact: %s", err)
 		}
 	}
 
@@ -145,12 +170,12 @@ func processArtifact(filename string, config Config) error {
 		}
 
 		// move package signature to final output directory
-		if err := os.Rename(destFilepath+".sig", filepath.Join(config.OutputDir, destFilename+".sig")); err != nil {
+		if err := moveFile(destFilepath+".sig", filepath.Join(config.OutputDir, destFilename+".sig")); err != nil {
 			return err
 		}
 
 		// move package to final output directory
-		if err := os.Rename(destFilepath, filepath.Join(config.OutputDir, destFilename)); err != nil {
+		if err := moveFile(destFilepath, filepath.Join(config.OutputDir, destFilename)); err != nil {
 			return err
 		}
 
@@ -169,9 +194,11 @@ func processArtifact(filename string, config Config) error {
 }
 
 func main() {
+	var configPath string
 	var timeWindow string
 	var minRunNumber int
 	var workflowName string
+	flag.StringVar(&configPath, "config", "", "Path to TOML configuration file")
 	flag.StringVar(&timeWindow, "since", "4h", "Use workflow runs within this time window")
 	flag.IntVar(&minRunNumber, "run", 0, "Use workflow runs starting with this run number")
 	flag.StringVar(&workflowName, "workflow", "", "Basename of workflow file")
@@ -185,14 +212,13 @@ func main() {
 	}
 	token := strings.TrimSpace(string(output))
 
-	// TODO: accept these as flags? or parse from config file?
 	config := Config{
-		Owner:       "mutantmonkey",
-		Repo:        "aur",
-		OutputDir:   "/tmp/tmp.SgCL7e8sSK",
-		DbName:      "repo.db.tar.gz",
-		Keyring:     "keyring.gpg",
 		SkipRepoAdd: true,
+	}
+
+	// TODO: need a default config path
+	if _, err = toml.DecodeFile(configPath, &config); err != nil {
+		log.Fatal(err)
 	}
 
 	minCreatedAt := time.Now().UTC()

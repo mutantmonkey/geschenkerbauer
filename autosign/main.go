@@ -171,7 +171,7 @@ func main() {
 	var workflowName string
 	flag.StringVar(&timeWindow, "since", "4h", "Use workflow runs within this time window")
 	flag.IntVar(&minRunNumber, "run", 0, "Use workflow runs starting with this run number")
-	flag.StringVar(&workflowName, "workflow", "build_updated_packages.yml", "Basename of workflow file")
+	flag.StringVar(&workflowName, "workflow", "", "Basename of workflow file")
 	flag.Parse()
 
 	// TODO: parse this from a config file
@@ -191,14 +191,6 @@ func main() {
 		Keyring:   "keyring.gpg",
 	}
 
-	client := github.NewClient(nil).WithAuthToken(token)
-
-	// TODO: should I also support running without specifying a workflow? or is that not needed?
-	runs, _, err := client.Actions.ListWorkflowRunsByFileName(context.Background(), config.Owner, config.Repo, workflowName, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	minCreatedAt := time.Now().UTC()
 	if timeWindow != "" {
 		duration, err := time.ParseDuration(timeWindow)
@@ -208,16 +200,55 @@ func main() {
 		minCreatedAt = minCreatedAt.Add(-duration)
 	}
 
-	for _, run := range runs.WorkflowRuns {
-		if minRunNumber > 0 {
-			if run.GetID() < int64(minRunNumber) {
-				break
-			}
-		} else if run.CreatedAt.GetTime().Compare(minCreatedAt) < 0 {
-			break
+	client := github.NewClient(nil).WithAuthToken(token)
+
+	if workflowName != "" {
+		runs, _, err := client.Actions.ListWorkflowRunsByFileName(context.Background(), config.Owner, config.Repo, workflowName, nil)
+		if err != nil {
+			log.Fatal(err)
 		}
 
-		fmt.Printf("Processing workflow run: %s #%d\n", run.GetName(), run.GetID())
-		processWorkflowRun(client, run, config)
+		for _, run := range runs.WorkflowRuns {
+			if minRunNumber > 0 {
+				if run.GetID() < int64(minRunNumber) {
+					break
+				}
+			} else if run.CreatedAt.GetTime().Compare(minCreatedAt) < 0 {
+				break
+			}
+
+			fmt.Printf("Processing workflow run: %s #%d\n", run.GetName(), run.GetID())
+			if err := processWorkflowRun(client, run, config); err != nil {
+				log.Fatal(err)
+			}
+		}
+	} else {
+		if minRunNumber > 0 {
+			log.Fatal("A workflow name must be specified with the -workflow flag when using the -run flag.")
+		}
+
+		workflows, _, err := client.Actions.ListWorkflows(context.Background(), config.Owner, config.Repo, nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for _, workflow := range workflows.Workflows {
+			runs, _, err := client.Actions.ListWorkflowRunsByID(context.Background(), config.Owner, config.Repo, workflow.GetID(), nil)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			for _, run := range runs.WorkflowRuns {
+				if run.CreatedAt.GetTime().Compare(minCreatedAt) < 0 {
+					break
+				}
+
+				fmt.Printf("Processing workflow run: %s #%d\n", run.GetName(), run.GetID())
+				if err := processWorkflowRun(client, run, config); err != nil {
+					log.Fatal(err)
+				}
+			}
+
+		}
 	}
 }

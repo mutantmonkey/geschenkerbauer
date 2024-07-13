@@ -18,11 +18,12 @@ import (
 )
 
 type Config struct {
-	Owner     string
-	Repo      string
-	OutputDir string
-	DbName    string
-	Keyring   string
+	Owner       string
+	Repo        string
+	OutputDir   string
+	DbName      string
+	Keyring     string
+	SkipRepoAdd bool
 }
 
 func processWorkflowRun(client *github.Client, run *github.WorkflowRun, config Config) error {
@@ -153,12 +154,14 @@ func processArtifact(filename string, config Config) error {
 			return err
 		}
 
-		// add new packages to repository database
-		// TODO: it would be nice if I could do this in pure Go
-		cmd = exec.Command("repo-add", config.DbName, destFilename)
-		cmd.Dir = config.OutputDir
-		if err := cmd.Run(); err != nil {
-			return err
+		if !config.SkipRepoAdd {
+			// add new packages to repository database
+			// TODO: it would be nice if I could do this in pure Go
+			cmd = exec.Command("repo-add", config.DbName, destFilename)
+			cmd.Dir = config.OutputDir
+			if err := cmd.Run(); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -184,11 +187,12 @@ func main() {
 
 	// TODO: accept these as flags? or parse from config file?
 	config := Config{
-		Owner:     "mutantmonkey",
-		Repo:      "aur",
-		OutputDir: "/tmp/tmp.SgCL7e8sSK",
-		DbName:    "repo.db.tar.gz",
-		Keyring:   "keyring.gpg",
+		Owner:       "mutantmonkey",
+		Repo:        "aur",
+		OutputDir:   "/tmp/tmp.SgCL7e8sSK",
+		DbName:      "repo.db.tar.gz",
+		Keyring:     "keyring.gpg",
+		SkipRepoAdd: true,
 	}
 
 	minCreatedAt := time.Now().UTC()

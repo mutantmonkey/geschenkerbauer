@@ -19,13 +19,14 @@ import (
 )
 
 type Config struct {
-	Owner       string
-	Repo        string
-	OutputDir   string
-	DbName      string
-	Keyring     string
-	SkipRepoAdd bool
-	AuthToken   string
+	Owner                string
+	Repo                 string
+	OutputDir            string
+	DbName               string
+	Keyring              string
+	SkipRepoAdd          bool
+	SkipAttestationCheck bool
+	AuthToken            string
 }
 
 func moveFile(oldpath string, newpath string) error {
@@ -160,10 +161,12 @@ func processArtifact(filename string, config Config) error {
 		}
 
 		// verify attestation
-		// TODO: when go-github supports this, do this in pure Go instead
-		cmd := exec.Command("gh", "attestation", "verify", destFilepath, "-R", repo)
-		if err := cmd.Run(); err != nil {
-			return err
+		if !config.SkipAttestationCheck {
+			// TODO: when go-github supports this, do this in pure Go instead
+			cmd := exec.Command("gh", "attestation", "verify", destFilepath, "-R", repo)
+			if err := cmd.Run(); err != nil {
+				return err
+			}
 		}
 
 		if err := signPackage(destFilepath, config.Keyring); err != nil {
@@ -183,7 +186,7 @@ func processArtifact(filename string, config Config) error {
 		if !config.SkipRepoAdd {
 			// add new packages to repository database
 			// TODO: it would be nice if I could do this in pure Go
-			cmd = exec.Command("repo-add", config.DbName, destFilename)
+			cmd := exec.Command("repo-add", config.DbName, destFilename)
 			cmd.Dir = config.OutputDir
 			if err := cmd.Run(); err != nil {
 				return err

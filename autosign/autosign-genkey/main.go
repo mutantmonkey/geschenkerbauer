@@ -22,6 +22,11 @@ func main() {
 	}
 	destPath := os.Args[1]
 
+	if _, err := os.Stat(destPath); err == nil {
+		fmt.Fprintf(os.Stderr, "The destination path already exists. If you want to generate a new key, delete the old one first.\n")
+		os.Exit(3)
+	}
+
 	reader := bufio.NewReader(os.Stdin)
 	var err error
 

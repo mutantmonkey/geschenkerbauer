@@ -164,23 +164,25 @@ func processArtifact(filename string, config Config) error {
 		if !config.SkipAttestationCheck {
 			// TODO: when go-github supports this, do this in pure Go instead
 			cmd := exec.Command("gh", "attestation", "verify", destFilepath, "-R", repo)
+			cmd.Env = os.Environ()
+			cmd.Env = append(cmd.Env, fmt.Sprintf("GH_TOKEN=%s", config.AuthToken))
 			if err := cmd.Run(); err != nil {
-				return err
+				return fmt.Errorf("Error validating attestation: %s", err)
 			}
 		}
 
 		if err := signPackage(destFilepath, config.Keyring); err != nil {
-			return err
+			return fmt.Errorf("Error signing package: %s", err)
 		}
 
 		// move package signature to final output directory
 		if err := moveFile(destFilepath+".sig", filepath.Join(config.OutputDir, destFilename+".sig")); err != nil {
-			return err
+			return fmt.Errorf("Error moving package signature to destination directory: %s", err)
 		}
 
 		// move package to final output directory
 		if err := moveFile(destFilepath, filepath.Join(config.OutputDir, destFilename)); err != nil {
-			return err
+			return fmt.Errorf("Error moving package to destination directory: %s", err)
 		}
 
 		if !config.SkipRepoAdd {
@@ -189,7 +191,7 @@ func processArtifact(filename string, config Config) error {
 			cmd := exec.Command("repo-add", config.DbName, destFilename)
 			cmd.Dir = config.OutputDir
 			if err := cmd.Run(); err != nil {
-				return err
+				return fmt.Errorf("Error adding package to repository database: %s", err)
 			}
 		}
 	}

@@ -85,7 +85,7 @@ func main() {
 					continue
 				}
 
-				if *event.Action == "completed" {
+				if event.GetAction() == "completed" && event.Repo.Owner.GetLogin() == config.Owner && event.Repo.GetName() == config.Repo {
 					err = ProcessWorkflowRun(config, client, *event.WorkflowRun.ID)
 					if err != nil {
 						log.Print(err)

@@ -3,6 +3,7 @@ module mutantmonkey.in/code/geschenkerbauer/autosign
 go 1.22.5
 
 require (
+	git.sr.ht/~emersion/go-smee v0.0.0-20231218103419-9efadbf00f29
 	github.com/BurntSushi/toml v1.4.0
 	github.com/ProtonMail/go-crypto v1.0.0
 	github.com/ProtonMail/gopenpgp/v2 v2.7.5

@@ -1,3 +1,5 @@
+git.sr.ht/~emersion/go-smee v0.0.0-20231218103419-9efadbf00f29 h1:HRyrEX6Q4nrbiiWy0lT2WdbQvIa0QD7BFwZJpQzoDr4=
+git.sr.ht/~emersion/go-smee v0.0.0-20231218103419-9efadbf00f29/go.mod h1:CRLQT2jsI0Cs95bjiECiIGIJX2C3Flha4DgRDL9vKKU=
 github.com/BurntSushi/toml v1.4.0 h1:kuoIxZQy2WRRk1pttg9asf+WVv6tWQuBNVmK8+nqPr0=
 github.com/BurntSushi/toml v1.4.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/ProtonMail/go-crypto v0.0.0-20230717121422-5aa5874ade95/go.mod h1:EjAoLdwvbIOoOQr3ihjnSoLZRtE8azugULFRteWMNc0=

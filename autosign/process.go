@@ -14,31 +14,30 @@ import (
 	"strings"
 	"time"
 
-	"github.com/BurntSushi/toml"
 	"github.com/google/go-github/v63/github"
 )
 
 func moveFile(oldpath string, newpath string) error {
 	srcFile, err := os.Open(oldpath)
 	if err != nil {
-		return fmt.Errorf("Could not open source file: %s", err)
+		return fmt.Errorf("could not open source file: %v", err)
 	}
 
 	destFile, err := os.Create(newpath)
 	if err != nil {
-		return fmt.Errorf("Could not open destination file: %s", err)
+		return fmt.Errorf("could not open destination file: %v", err)
 	}
 	defer destFile.Close()
 
 	_, err = io.Copy(destFile, srcFile)
 	srcFile.Close()
 	if err != nil {
-		return fmt.Errorf("Could not write to destination file: %s", err)
+		return fmt.Errorf("could not write to destination file: %v", err)
 	}
 
 	// Remove original file
 	if err := os.Remove(oldpath); err != nil {
-		return fmt.Errorf("Could not remove original file: %s", err)
+		return fmt.Errorf("could not remove original file: %v", err)
 	}
 
 	return nil
@@ -54,29 +53,29 @@ func processWorkflowRun(client *github.Client, run *github.WorkflowRun, config C
 
 		url, _, err := client.Actions.DownloadArtifact(context.Background(), config.Owner, config.Repo, artifact.GetID(), 1)
 		if err != nil {
-			return fmt.Errorf("Could not download artifact: %s", err)
+			return fmt.Errorf("could not download artifact: %v", err)
 		}
 
 		f, err := os.CreateTemp("", "*.zip")
 		if err != nil {
-			return fmt.Errorf("Could not create temporary file: %s", err)
+			return fmt.Errorf("could not create temporary file: %v", err)
 		}
 		defer os.Remove(f.Name())
 
 		resp, err := http.Get(url.String())
 		if err != nil {
-			return fmt.Errorf("Could not download file: %s", err)
+			return fmt.Errorf("could not download file: %v", err)
 		}
 		defer resp.Body.Close()
 
 		_, err = io.Copy(f, resp.Body)
 		f.Close()
 		if err != nil {
-			return fmt.Errorf("Could not write to destination file: %s", err)
+			return fmt.Errorf("could not write to destination file: %v", err)
 		}
 
 		if err := processArtifact(f.Name(), config); err != nil {
-			return fmt.Errorf("Could not process artifact: %s", err)
+			return fmt.Errorf("could not process artifact: %v", err)
 		}
 	}
 
@@ -156,22 +155,22 @@ func processArtifact(filename string, config Config) error {
 			cmd.Env = os.Environ()
 			cmd.Env = append(cmd.Env, fmt.Sprintf("GH_TOKEN=%s", config.AuthToken))
 			if err := cmd.Run(); err != nil {
-				return fmt.Errorf("Error validating attestation: %s", err)
+				return fmt.Errorf("error validating attestation: %v", err)
 			}
 		}
 
 		if err := signPackage(destFilepath, config.Keyring); err != nil {
-			return fmt.Errorf("Error signing package: %s", err)
+			return fmt.Errorf("error signing package: %v", err)
 		}
 
 		// move package signature to final output directory
 		if err := moveFile(destFilepath+".sig", filepath.Join(config.OutputDir, destFilename+".sig")); err != nil {
-			return fmt.Errorf("Error moving package signature to destination directory: %s", err)
+			return fmt.Errorf("error moving package signature to destination directory: %v", err)
 		}
 
 		// move package to final output directory
 		if err := moveFile(destFilepath, filepath.Join(config.OutputDir, destFilename)); err != nil {
-			return fmt.Errorf("Error moving package to destination directory: %s", err)
+			return fmt.Errorf("error moving package to destination directory: %v", err)
 		}
 
 		if !config.SkipRepoAdd {
@@ -180,7 +179,7 @@ func processArtifact(filename string, config Config) error {
 			cmd := exec.Command("repo-add", config.DbName, destFilename)
 			cmd.Dir = config.OutputDir
 			if err := cmd.Run(); err != nil {
-				return fmt.Errorf("Error adding package to repository database: %s", err)
+				return fmt.Errorf("error adding package to repository database: %v", err)
 			}
 		}
 	}
@@ -188,30 +187,34 @@ func processArtifact(filename string, config Config) error {
 	return nil
 }
 
-func ProcessWorkflows(opts ProcessOptions) error {
-	config := Config{
-		SkipRepoAdd: true,
+func ProcessWorkflowRun(config Config, client *github.Client, runID int64) error {
+	run, _, err := client.Actions.GetWorkflowRunByID(context.Background(), config.Owner, config.Repo, runID)
+	if err != nil {
+		return err
 	}
 
-	if _, err := toml.DecodeFile(opts.ConfigPath, &config); err != nil {
-		return fmt.Errorf("Error reading config: %v", err)
+	fmt.Printf("Processing workflow run: %s #%d\n", run.GetName(), run.GetID())
+	if err := processWorkflowRun(client, run, config); err != nil {
+		return err
 	}
 
+	return nil
+}
+
+func ProcessWorkflows(config Config, client *github.Client, opts ProcessOptions) error {
 	minCreatedAt := time.Now().UTC()
 	if opts.TimeWindow != "" {
 		duration, err := time.ParseDuration(opts.TimeWindow)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		minCreatedAt = minCreatedAt.Add(-duration)
 	}
 
-	client := github.NewClient(nil).WithAuthToken(config.AuthToken)
-
 	if opts.WorkflowName != "" {
 		runs, _, err := client.Actions.ListWorkflowRunsByFileName(context.Background(), config.Owner, config.Repo, opts.WorkflowName, nil)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		for _, run := range runs.WorkflowRuns {
@@ -230,12 +233,12 @@ func ProcessWorkflows(opts ProcessOptions) error {
 		}
 	} else {
 		if opts.MinRunNumber > 0 {
-			return errors.New("When filtering based on run number, a workflow name must be specified.")
+			return errors.New("workflow name is required")
 		}
 
 		workflows, _, err := client.Actions.ListWorkflows(context.Background(), config.Owner, config.Repo, nil)
 		if err != nil {
-			return fmt.Errorf("Error listing workflows: %v", err)
+			return fmt.Errorf("error listing workflows: %v", err)
 		}
 
 		for _, workflow := range workflows.Workflows {

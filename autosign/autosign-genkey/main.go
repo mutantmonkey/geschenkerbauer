@@ -23,6 +23,23 @@ func main() {
 	destPath := os.Args[1]
 
 	if _, err := os.Stat(destPath); err == nil {
+		f, err := os.Open(destPath)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer f.Close()
+
+		k, err := crypto.NewKeyFromReader(f)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		armored, err := k.GetArmoredPublicKey()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("%s\n", armored)
+
 		fmt.Fprintf(os.Stderr, "The destination path already exists. If you want to generate a new key, delete the old one first.\n")
 		os.Exit(3)
 	}
@@ -78,4 +95,10 @@ func main() {
 	}
 
 	f.Write(output)
+
+	armored, err := newKey.GetArmoredPublicKey()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%s\n", armored)
 }

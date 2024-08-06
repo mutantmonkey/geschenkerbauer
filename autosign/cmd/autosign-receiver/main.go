@@ -2,7 +2,11 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
+	"net/http"
+	"sync"
+	"time"
 
 	"github.com/BurntSushi/toml"
 )
@@ -11,20 +15,26 @@ type Config struct {
 	IncomingDir string
 	RepoDir     string
 	DbName      string
-	ListenAddr  string
 	GitHub      GitHubConfig
+	Receiver    ReceiverConfig
 }
 
 type GitHubConfig struct {
-	Owner       string
-	Repo        string
-	AuthToken   string
+	Owner     string
+	Repo      string
+	AuthToken string
+}
+
+type ReceiverConfig struct {
+	ListenAddr    string `default:":8080"`
+	WebhookSecret string
 }
 
 func main() {
 	var configPath string
-	// TODO: listen port
+	var daemonMode bool
 	flag.StringVar(&configPath, "config", "", "Path to TOML configuration file")
+	flag.BoolVar(&daemonMode, "d", false, "Run in daemon mode and listen for webhook calls")
 	flag.Parse()
 
 	if configPath == "" {
@@ -38,10 +48,46 @@ func main() {
 		log.Fatalf("Error reading config: %v", err)
 	}
 
-	// TODO: use gokr-rsync to copy files over?
+	if daemonMode {
+		var processMutex sync.Mutex
 
-	err := ProcessIncoming(config)
-	if err != nil {
-		log.Fatal(err)
+		s := http.Server{
+			Addr:           config.Receiver.ListenAddr,
+			ReadTimeout:    10 * time.Second,
+			WriteTimeout:   10 * time.Second,
+			MaxHeaderBytes: 1 << 20,
+		}
+
+		http.HandleFunc("/webhook", func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != "POST" {
+				http.Error(w, "405 method not allowed", http.StatusMethodNotAllowed)
+				return
+			}
+
+			if r.Header.Get("Authorization") != fmt.Sprintf("Bearer %s", config.Receiver.WebhookSecret) {
+				http.Error(w, "403 forbidden", http.StatusForbidden)
+				return
+			}
+
+			go func() {
+				processMutex.Lock()
+
+				err := ProcessIncoming(config)
+				if err != nil {
+					log.Print(err)
+				}
+
+				processMutex.Unlock()
+			}()
+
+			fmt.Fprintf(w, "ok\n")
+		})
+
+		log.Fatal(s.ListenAndServe())
+	} else {
+		err := ProcessIncoming(config)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }

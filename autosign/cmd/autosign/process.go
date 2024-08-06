@@ -15,43 +15,18 @@ import (
 	"time"
 
 	"github.com/google/go-github/v63/github"
+	"mutantmonkey.in/code/geschenkerbauer/autosign/internal/fshelpers"
 )
 
-func moveFile(oldpath string, newpath string) error {
-	srcFile, err := os.Open(oldpath)
-	if err != nil {
-		return fmt.Errorf("could not open source file: %v", err)
-	}
-
-	destFile, err := os.Create(newpath)
-	if err != nil {
-		return fmt.Errorf("could not open destination file: %v", err)
-	}
-	defer destFile.Close()
-
-	_, err = io.Copy(destFile, srcFile)
-	srcFile.Close()
-	if err != nil {
-		return fmt.Errorf("could not write to destination file: %v", err)
-	}
-
-	// Remove original file
-	if err := os.Remove(oldpath); err != nil {
-		return fmt.Errorf("could not remove original file: %v", err)
-	}
-
-	return nil
-}
-
 func processWorkflowRun(client *github.Client, run *github.WorkflowRun, config Config) error {
-	artifacts, _, err := client.Actions.ListWorkflowRunArtifacts(context.Background(), config.Owner, config.Repo, run.GetID(), nil)
+	artifacts, _, err := client.Actions.ListWorkflowRunArtifacts(context.Background(), config.GitHub.Owner, config.GitHub.Repo, run.GetID(), nil)
 	if err != nil {
 		return err
 	}
 	for _, artifact := range artifacts.Artifacts {
 		fmt.Printf("Processing artifact: %s (%d)\n", artifact.GetName(), artifact.GetID())
 
-		url, _, err := client.Actions.DownloadArtifact(context.Background(), config.Owner, config.Repo, artifact.GetID(), 1)
+		url, _, err := client.Actions.DownloadArtifact(context.Background(), config.GitHub.Owner, config.GitHub.Repo, artifact.GetID(), 1)
 		if err != nil {
 			return fmt.Errorf("could not download artifact: %v", err)
 		}
@@ -83,7 +58,7 @@ func processWorkflowRun(client *github.Client, run *github.WorkflowRun, config C
 }
 
 func processArtifact(filename string, config Config) error {
-	repo := fmt.Sprintf("%s/%s", config.Owner, config.Repo)
+	repo := fmt.Sprintf("%s/%s", config.GitHub.Owner, config.GitHub.Repo)
 
 	// create temporary destination directory
 	dir, err := os.MkdirTemp("", "geschenkerbauer")
@@ -153,7 +128,7 @@ func processArtifact(filename string, config Config) error {
 			// TODO: when go-github supports this, do this in pure Go instead
 			cmd := exec.Command("gh", "attestation", "verify", destFilepath, "-R", repo)
 			cmd.Env = os.Environ()
-			cmd.Env = append(cmd.Env, fmt.Sprintf("GH_TOKEN=%s", config.AuthToken))
+			cmd.Env = append(cmd.Env, fmt.Sprintf("GH_TOKEN=%s", config.GitHub.AuthToken))
 			if err := cmd.Run(); err != nil {
 				return fmt.Errorf("error validating attestation: %v", err)
 			}
@@ -164,12 +139,12 @@ func processArtifact(filename string, config Config) error {
 		}
 
 		// move package signature to final output directory
-		if err := moveFile(destFilepath+".sig", filepath.Join(config.OutputDir, destFilename+".sig")); err != nil {
+		if err := fshelpers.MoveFile(destFilepath+".sig", filepath.Join(config.OutputDir, destFilename+".sig")); err != nil {
 			return fmt.Errorf("error moving package signature to destination directory: %v", err)
 		}
 
 		// move package to final output directory
-		if err := moveFile(destFilepath, filepath.Join(config.OutputDir, destFilename)); err != nil {
+		if err := fshelpers.MoveFile(destFilepath, filepath.Join(config.OutputDir, destFilename)); err != nil {
 			return fmt.Errorf("error moving package to destination directory: %v", err)
 		}
 
@@ -188,7 +163,7 @@ func processArtifact(filename string, config Config) error {
 }
 
 func ProcessWorkflowRun(config Config, client *github.Client, runID int64) error {
-	run, _, err := client.Actions.GetWorkflowRunByID(context.Background(), config.Owner, config.Repo, runID)
+	run, _, err := client.Actions.GetWorkflowRunByID(context.Background(), config.GitHub.Owner, config.GitHub.Repo, runID)
 	if err != nil {
 		return err
 	}
@@ -212,7 +187,7 @@ func ProcessWorkflows(config Config, client *github.Client, opts ProcessOptions)
 	}
 
 	if opts.WorkflowName != "" {
-		runs, _, err := client.Actions.ListWorkflowRunsByFileName(context.Background(), config.Owner, config.Repo, opts.WorkflowName, nil)
+		runs, _, err := client.Actions.ListWorkflowRunsByFileName(context.Background(), config.GitHub.Owner, config.GitHub.Repo, opts.WorkflowName, nil)
 		if err != nil {
 			return err
 		}
@@ -236,13 +211,13 @@ func ProcessWorkflows(config Config, client *github.Client, opts ProcessOptions)
 			return errors.New("workflow name is required")
 		}
 
-		workflows, _, err := client.Actions.ListWorkflows(context.Background(), config.Owner, config.Repo, nil)
+		workflows, _, err := client.Actions.ListWorkflows(context.Background(), config.GitHub.Owner, config.GitHub.Repo, nil)
 		if err != nil {
 			return fmt.Errorf("error listing workflows: %v", err)
 		}
 
 		for _, workflow := range workflows.Workflows {
-			runs, _, err := client.Actions.ListWorkflowRunsByID(context.Background(), config.Owner, config.Repo, workflow.GetID(), nil)
+			runs, _, err := client.Actions.ListWorkflowRunsByID(context.Background(), config.GitHub.Owner, config.GitHub.Repo, workflow.GetID(), nil)
 			if err != nil {
 				log.Fatal(err)
 			}

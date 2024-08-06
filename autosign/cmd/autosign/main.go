@@ -11,16 +11,20 @@ import (
 )
 
 type Config struct {
-	Owner                string
-	Repo                 string
 	OutputDir            string
 	DbName               string
 	Keyring              string
 	SkipRepoAdd          bool
 	SkipAttestationCheck bool
-	AuthToken            string
 	SmeeProxyURL         string
-	GitHubSecretToken    string
+	GitHub               GitHubConfig
+}
+
+type GitHubConfig struct {
+	Owner         string
+	Repo          string
+	AuthToken     string
+	WebhookSecret string
 }
 
 type ProcessOptions struct {
@@ -54,7 +58,7 @@ func main() {
 		log.Fatalf("Error reading config: %v", err)
 	}
 
-	client := github.NewClient(nil).WithAuthToken(config.AuthToken)
+	client := github.NewClient(nil).WithAuthToken(config.GitHub.AuthToken)
 
 	if listenForRuns {
 		if config.SmeeProxyURL == "" {
@@ -73,7 +77,7 @@ func main() {
 			}
 
 			if wh.Header["x-github-event"] == "workflow_run" {
-				err := github.ValidateSignature(wh.Header["x-hub-signature"], wh.Body, []byte(config.GitHubSecretToken))
+				err := github.ValidateSignature(wh.Header["x-hub-signature"], wh.Body, []byte(config.GitHub.WebhookSecret))
 				if err != nil {
 					log.Printf("failed to verify signature: %v", err)
 					continue
@@ -85,7 +89,7 @@ func main() {
 					continue
 				}
 
-				if event.GetAction() == "completed" && event.Repo.Owner.GetLogin() == config.Owner && event.Repo.GetName() == config.Repo {
+				if event.GetAction() == "completed" && event.Repo.Owner.GetLogin() == config.GitHub.Owner && event.Repo.GetName() == config.GitHub.Repo {
 					err = ProcessWorkflowRun(config, client, *event.WorkflowRun.ID)
 					if err != nil {
 						log.Print(err)

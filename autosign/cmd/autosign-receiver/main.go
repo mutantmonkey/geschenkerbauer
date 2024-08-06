@@ -27,7 +27,7 @@ type GitHubConfig struct {
 
 type ReceiverConfig struct {
 	ListenAddr    string `default:":8080"`
-	WebhookSecret string
+	BearerToken string
 }
 
 func main() {
@@ -64,7 +64,7 @@ func main() {
 				return
 			}
 
-			if r.Header.Get("Authorization") != fmt.Sprintf("Bearer %s", config.Receiver.WebhookSecret) {
+			if r.Header.Get("Authorization") != fmt.Sprintf("Bearer %s", config.Receiver.BearerToken) {
 				http.Error(w, "403 forbidden", http.StatusForbidden)
 				return
 			}

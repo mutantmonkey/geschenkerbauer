@@ -18,6 +18,7 @@ type Config struct {
 	SkipAttestationCheck bool
 	SmeeProxyURL         string
 	GitHub               GitHubConfig
+	Webhook              WebhookConfig
 }
 
 type GitHubConfig struct {
@@ -25,6 +26,11 @@ type GitHubConfig struct {
 	Repo          string
 	AuthToken     string
 	WebhookSecret string
+}
+
+type WebhookConfig struct {
+	URL         string
+	BearerToken string
 }
 
 type ProcessOptions struct {
@@ -94,6 +100,11 @@ func main() {
 					if err != nil {
 						log.Print(err)
 					}
+
+					err = triggerWebhook(config)
+					if err != nil {
+						log.Print(err)
+					}
 				}
 			}
 		}
@@ -102,5 +113,11 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		err = triggerWebhook(config)
+		if err != nil {
+			log.Print(err)
+		}
+
 	}
 }

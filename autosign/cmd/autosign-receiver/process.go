@@ -20,7 +20,6 @@ func ProcessIncoming(config Config) error {
 		return fmt.Errorf("failed reading incoming directory: %v", err)
 	}
 
-	// FIXME: process a different way, since we're not using a ZIP file anymore
 	for _, f := range files {
 		// skip directories, we only want package files
 		if f.IsDir() {

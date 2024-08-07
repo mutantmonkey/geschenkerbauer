@@ -2,3 +2,11 @@
 .DS_Store
 Thumbs.db
 /repo_config.sh
+/autosign/cmd/autosign-genkey/autosign-genkey
+/autosign/cmd/autosign-receiver/autosign-receiver
+/autosign/cmd/autosign/autosign
+/autosign/NOTES.md
+/autosign.toml
+/autosign-receiver.toml
+keyring.gpg
+keyring.pgp

@@ -2,37 +2,25 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"mutantmonkey.in/code/geschenkerbauer/autosign/internal/fshelpers"
 )
 
 func ProcessIncoming(config Config) error {
 	repo := fmt.Sprintf("%s/%s", config.GitHub.Owner, config.GitHub.Repo)
+	fileSystem := os.DirFS(config.IncomingDir)
 
-	files, err := ioutil.ReadDir(config.IncomingDir)
+	files, err := fs.Glob(fileSystem, "*.pkg.tar.zst")
 	if err != nil {
 		return fmt.Errorf("failed reading incoming directory: %v", err)
 	}
 
-	for _, f := range files {
-		// skip directories, we only want package files
-		if f.IsDir() {
-			continue
-		}
-
-		// skip files that don't end in .pkg.tar.zst
-		if !strings.HasSuffix(f.Name(), ".pkg.tar.zst") {
-			log.Printf("Warning: skipping %q because the filename doesn't end in .pkg.tar.zst", f.Name())
-			continue
-		}
-
-		filename := filepath.Base(filepath.Clean(f.Name()))
+	for _, filename := range files {
 		incomingFilepath := filepath.Join(config.IncomingDir, filename)
 		fmt.Printf("%s\n", incomingFilepath)
 

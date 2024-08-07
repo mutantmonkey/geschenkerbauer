@@ -26,7 +26,7 @@ type GitHubConfig struct {
 }
 
 type ReceiverConfig struct {
-	ListenAddr    string `default:":8080"`
+	ListenAddr  string `default:":8080"`
 	BearerToken string
 }
 

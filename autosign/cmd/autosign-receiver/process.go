@@ -21,6 +21,7 @@ func ProcessIncoming(config Config) error {
 	}
 
 	for _, filename := range files {
+		filename = filepath.Base(filepath.Clean(filename))
 		incomingFilepath := filepath.Join(config.IncomingDir, filename)
 		fmt.Printf("%s\n", incomingFilepath)
 

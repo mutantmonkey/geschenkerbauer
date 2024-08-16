@@ -19,6 +19,7 @@ type Config struct {
 	SmeeProxyURL         string
 	GitHub               GitHubConfig
 	Webhook              WebhookConfig
+	S3                   S3Config
 }
 
 type GitHubConfig struct {
@@ -31,6 +32,13 @@ type GitHubConfig struct {
 type WebhookConfig struct {
 	URL         string
 	BearerToken string
+}
+
+type S3Config struct {
+	Endpoint        string
+	AccessKeyID     string
+	SecretAccessKey string
+	Bucket          string
 }
 
 type ProcessOptions struct {
@@ -101,7 +109,7 @@ func main() {
 						log.Print(err)
 					}
 
-					err = triggerWebhook(config)
+					err = postProcess(config)
 					if err != nil {
 						log.Print(err)
 					}
@@ -114,10 +122,9 @@ func main() {
 			log.Fatal(err)
 		}
 
-		err = triggerWebhook(config)
+		err = postProcess(config)
 		if err != nil {
 			log.Print(err)
 		}
-
 	}
 }

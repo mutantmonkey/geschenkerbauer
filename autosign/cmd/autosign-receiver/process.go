@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io/fs"
 	"log"
@@ -8,10 +9,52 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	"mutantmonkey.in/code/geschenkerbauer/autosign/internal/fshelpers"
 )
 
+func downloadFromS3(config Config) error {
+	ctx := context.Background()
+	client, err := minio.New(config.S3.Endpoint, &minio.Options{
+		Creds: credentials.NewStaticV4(
+			config.S3.AccessKeyID,
+			config.S3.SecretAccessKey,
+			""),
+		Secure: true,
+	})
+	if err != nil {
+		return fmt.Errorf("error creating S3 client: %v", err)
+	}
+
+	for object := range client.ListObjects(ctx, config.S3.Bucket, minio.ListObjectsOptions{}) {
+		if object.Err != nil {
+			return fmt.Errorf("error listing objects: %v", err)
+		}
+
+		filename := filepath.Base(filepath.Clean(object.Key))
+		destpath := filepath.Join(config.IncomingDir, filename)
+
+		if _, err := os.Stat(filepath.Join(config.RepoDir, filename)); err == nil {
+			log.Printf("Warning: skipping %q because it already exists in the output directory", filename)
+			continue
+		}
+
+		if err := client.FGetObject(ctx, config.S3.Bucket, filename, destpath, minio.GetObjectOptions{}); err != nil {
+			return fmt.Errorf("failed to download object: %v", err)
+		}
+	}
+
+	return nil
+}
+
 func ProcessIncoming(config Config) error {
+	if config.S3.Endpoint != "" {
+		if err := downloadFromS3(config); err != nil {
+			return fmt.Errorf("failed downloading from S3: %v", err)
+		}
+	}
+
 	repo := fmt.Sprintf("%s/%s", config.GitHub.Owner, config.GitHub.Repo)
 	fileSystem := os.DirFS(config.IncomingDir)
 
@@ -31,6 +74,8 @@ func ProcessIncoming(config Config) error {
 			continue
 		}
 
+		// XXX: use fs.Stat(fileSystem, filename + ".sig") here instead?
+		// github.com/jszwec/s3fs implements StatFS
 		if _, err := os.Stat(incomingFilepath + ".sig"); err != nil {
 			log.Printf("Warning: skipping %q because signature was not present", filename)
 		}

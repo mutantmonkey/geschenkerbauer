@@ -8,6 +8,7 @@ import (
 	"git.sr.ht/~emersion/go-smee"
 	"github.com/BurntSushi/toml"
 	"github.com/google/go-github/v63/github"
+	"mutantmonkey.in/code/geschenkerbauer/autosign/internal/configs"
 )
 
 type Config struct {
@@ -19,7 +20,7 @@ type Config struct {
 	SmeeProxyURL         string
 	GitHub               GitHubConfig
 	Webhook              WebhookConfig
-	S3                   S3Config
+	S3                   configs.S3Config
 }
 
 type GitHubConfig struct {
@@ -32,13 +33,6 @@ type GitHubConfig struct {
 type WebhookConfig struct {
 	URL         string
 	BearerToken string
-}
-
-type S3Config struct {
-	Endpoint        string
-	AccessKeyID     string
-	SecretAccessKey string
-	Bucket          string
 }
 
 type ProcessOptions struct {

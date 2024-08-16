@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
+	"mutantmonkey.in/code/geschenkerbauer/autosign/internal/configs"
 )
 
 type Config struct {
@@ -17,6 +18,7 @@ type Config struct {
 	DbName      string
 	GitHub      GitHubConfig
 	Receiver    ReceiverConfig
+	S3          configs.S3Config
 }
 
 type GitHubConfig struct {

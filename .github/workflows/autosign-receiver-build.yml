@@ -9,6 +9,7 @@ on:
       - 'containers/autosign-receiver/**'
     # Publish semver tags as releases.
     tags: [ 'v*.*.*' ]
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io

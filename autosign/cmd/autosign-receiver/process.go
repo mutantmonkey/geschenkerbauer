@@ -74,10 +74,9 @@ func ProcessIncoming(config Config) error {
 			continue
 		}
 
-		// XXX: use fs.Stat(fileSystem, filename + ".sig") here instead?
-		// github.com/jszwec/s3fs implements StatFS
 		if _, err := os.Stat(incomingFilepath + ".sig"); err != nil {
 			log.Printf("Warning: skipping %q because signature was not present", filename)
+			continue
 		}
 
 		// verify attestation

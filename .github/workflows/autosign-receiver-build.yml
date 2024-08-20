@@ -2,6 +2,8 @@ name: autosign-receiver build
 
 on:
   push:
+    branches:
+      - 'main'
     paths:
       - '.github/workflows/autosign-receiver-build.yml'
       - 'autosign/**'

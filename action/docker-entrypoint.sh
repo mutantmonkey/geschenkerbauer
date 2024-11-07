@@ -49,8 +49,11 @@ if [[ "$INPUT_NODEPS" == "1" ]] || [[ "$INPUT_NODEPS" == "true" ]]; then
     # install git because some packages may need it to even download sources
     sudo pacman -S --noconfirm git
 
-    cd "$1"
+    rsync -rlpt --delete "$1/" /startdir
+
+    pushd /startdir
     makepkg --nodeps --noconfirm
+    popd
 else
     # inspect packages in the current directory and populate the
     # pkgname_to_pkgbase associative array
@@ -65,9 +68,13 @@ else
         for pkg in $(get_deptree_for_pkg "$mainpkg"); do
             pkgbase="${pkgname_to_pkgbase["$pkg"]}"
             echo "::group::${pkgbase}"
-            pushd "${pkgbase}"
+
+            rsync -rlpt --delete "${pkgbase}/" /startdir
+
+            pushd /startdir
             makepkg -is --noconfirm
             popd
+
             echo "::endgroup::"
         done
     done

@@ -49,7 +49,7 @@ if [[ "$INPUT_NODEPS" == "1" ]] || [[ "$INPUT_NODEPS" == "true" ]]; then
     # install git because some packages may need it to even download sources
     sudo pacman -S --noconfirm git
 
-    rsync -rlpt --delete "$1/" /startdir
+    cp -a "$1/." /startdir
 
     pushd /startdir
     makepkg --nodeps --noconfirm
@@ -69,7 +69,8 @@ else
             pkgbase="${pkgname_to_pkgbase["$pkg"]}"
             echo "::group::${pkgbase}"
 
-            rsync -rlpt --delete "${pkgbase}/" /startdir
+            find /startdir -mindepth 1 -delete
+            cp -a "${pkgbase}/." /startdir
 
             pushd /startdir
             makepkg -is --noconfirm

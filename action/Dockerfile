@@ -1,4 +1,4 @@
-FROM ghcr.io/archlinux/archlinux:base-devel@sha256:a1e5e0693ad06ad112e16652a5be80b6e58f438c9f6c5a83446bdbbf0555413a
+FROM ghcr.io/archlinux/archlinux:base-devel@sha256:aef5ac58515554f3db7a5a19353190ce15e97b2e69750c7322b91974d3028fde
 
 RUN set -x \
         && useradd -m -g users -u 1000 builduser \

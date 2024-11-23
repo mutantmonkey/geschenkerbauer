@@ -9,8 +9,10 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/google/go-github/v66/github"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"mutantmonkey.in/code/geschenkerbauer/autosign/internal/attestation"
 	"mutantmonkey.in/code/geschenkerbauer/autosign/internal/fshelpers"
 )
 
@@ -55,7 +57,6 @@ func ProcessIncoming(config Config) error {
 		}
 	}
 
-	repo := fmt.Sprintf("%s/%s", config.GitHub.Owner, config.GitHub.Repo)
 	fileSystem := os.DirFS(config.IncomingDir)
 
 	files, err := fs.Glob(fileSystem, "*.pkg.tar.zst")
@@ -80,10 +81,8 @@ func ProcessIncoming(config Config) error {
 		}
 
 		// verify attestation
-		cmd := exec.Command("gh", "attestation", "verify", incomingFilepath, "-R", repo)
-		cmd.Env = os.Environ()
-		cmd.Env = append(cmd.Env, fmt.Sprintf("GH_TOKEN=%s", config.GitHub.AuthToken))
-		if err := cmd.Run(); err != nil {
+		client := github.NewClient(nil).WithAuthToken(config.GitHub.AuthToken)
+		if _, err := attestation.VerifyAttestation(incomingFilepath, client, config.GitHub.Owner, config.GitHub.Repo); err != nil {
 			return fmt.Errorf("error validating attestation: %v", err)
 		}
 
@@ -98,7 +97,7 @@ func ProcessIncoming(config Config) error {
 		}
 
 		// add new packages to repository database
-		cmd = exec.Command("repo-add", config.DbName, filename)
+		cmd := exec.Command("repo-add", config.DbName, filename)
 		cmd.Dir = config.RepoDir
 		if err := cmd.Run(); err != nil {
 			return fmt.Errorf("error adding package to repository database: %v", err)

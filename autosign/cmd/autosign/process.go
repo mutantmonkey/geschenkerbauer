@@ -14,7 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/go-github/v63/github"
+	"github.com/google/go-github/v66/github"
+	"mutantmonkey.in/code/geschenkerbauer/autosign/internal/attestation"
 	"mutantmonkey.in/code/geschenkerbauer/autosign/internal/fshelpers"
 )
 
@@ -49,7 +50,7 @@ func processWorkflowRun(client *github.Client, run *github.WorkflowRun, config C
 			return fmt.Errorf("could not write to destination file: %v", err)
 		}
 
-		if err := processArtifact(f.Name(), config); err != nil {
+		if err := processArtifact(f.Name(), client, config); err != nil {
 			return fmt.Errorf("could not process artifact: %v", err)
 		}
 	}
@@ -57,9 +58,7 @@ func processWorkflowRun(client *github.Client, run *github.WorkflowRun, config C
 	return nil
 }
 
-func processArtifact(filename string, config Config) error {
-	repo := fmt.Sprintf("%s/%s", config.GitHub.Owner, config.GitHub.Repo)
-
+func processArtifact(filename string, client *github.Client, config Config) error {
 	// create temporary destination directory
 	dir, err := os.MkdirTemp("", "geschenkerbauer")
 	if err != nil {
@@ -125,11 +124,7 @@ func processArtifact(filename string, config Config) error {
 
 		// verify attestation
 		if !config.SkipAttestationCheck {
-			// TODO: when go-github supports this, do this in pure Go instead
-			cmd := exec.Command("gh", "attestation", "verify", destFilepath, "-R", repo)
-			cmd.Env = os.Environ()
-			cmd.Env = append(cmd.Env, fmt.Sprintf("GH_TOKEN=%s", config.GitHub.AuthToken))
-			if err := cmd.Run(); err != nil {
+			if _, err := attestation.VerifyAttestation(destFilepath, client, config.GitHub.Owner, config.GitHub.Repo); err != nil {
 				return fmt.Errorf("error validating attestation: %v", err)
 			}
 		}

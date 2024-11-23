@@ -114,13 +114,9 @@ if __name__ == '__main__':
                     "geschenkerbauer")
     parser.add_argument('--buildhost', required=True, help="Build host")
     parser.add_argument(
-        '--controller-image',
-        default="mutantmonkey/geschenkerbauer-controller:latest",
-        help="Docker image that will be launched on the build host")
-    parser.add_argument(
         '--build-image',
-        help="Docker image that will be launched by the controller to build "
-             "each package")
+        default="mutantmonkey/geschenkerbauer:latest",
+        help="Docker image that will be launched to build each package")
     parser.add_argument('--buildsrcdir',
                         default="/home/core/arch/packages",
                         help="Source package directory")
@@ -164,32 +160,6 @@ if __name__ == '__main__':
         subprocess.run(['rsync', '-avP'] + pkgs_to_build +
                        [':'.join([args.buildhost, args.buildsrcdir])])
 
-    ssh_args = [
-        'docker',
-        'run',
-        '--rm',
-        '-v',
-        '/var/run/docker.sock:/var/run/docker.sock',
-        '-e',
-        'buildsrcdir={0}'.format(shlex.quote(args.buildsrcdir)),
-        '-e',
-        'repodir={0}'.format(shlex.quote(args.repodir)),
-        '-e',
-        'PACKAGER={0}'.format(shlex.quote(args.packager)),
-    ]
-
-    if args.build_image is not None:
-        ssh_args += [
-             '-e',
-            'buildimg={0}'.format(shlex.quote(args.build_image)),
-        ]
-
-    if args.gpgdir is not None:
-        ssh_args += [
-             '-e',
-            'gpgdir={0}'.format(shlex.quote(args.gpgdir)),
-        ]
-
     if args.keyring is not None:
         if not args.skip_copy:
             subprocess.run(
@@ -199,8 +169,32 @@ if __name__ == '__main__':
                     os.path.join(args.buildsrcdir, 'keyring.asc'),
                 ])]
             )
-        ssh_args += ['-e', 'gpgkeyring=1']
 
-    ssh_args += [args.controller_image]
-    ssh_args += pkgs_to_build
-    subprocess.run(['ssh', args.buildhost] + ssh_args)
+    ssh_base_args = [
+        'docker',
+        'run',
+        '--rm',
+        '-v',
+        '{args.repodir}:/repo',
+        '-e',
+        'PACKAGER={0}'.format(shlex.quote(args.packager)),
+    ]
+
+    if args.gpgdir is not None:
+        ssh_base_args += [
+            '-v',
+            '{args.gpgdir}:/gnupg',
+            '-e',
+            'GNUPGHOME=/gnupg',
+        ]
+
+    if args.keyring is not None:
+        ssh_base_args += ['-e', f"GNUPG_PUBKEYRING={args.keyring}"]
+
+    for pkg in pkgs_to_build:
+        ssh_args = ssh_base_args + [
+            '-v',
+            '{0}:/buildsrc'.format(os.path.join(args.repodir, pkg)),
+            args.build_image,
+        ]
+        subprocess.run(['ssh', args.buildhost] + ssh_args)

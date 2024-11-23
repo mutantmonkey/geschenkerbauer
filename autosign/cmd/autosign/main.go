@@ -7,7 +7,7 @@ import (
 
 	"git.sr.ht/~emersion/go-smee"
 	"github.com/BurntSushi/toml"
-	"github.com/google/go-github/v63/github"
+	"github.com/google/go-github/v66/github"
 	"mutantmonkey.in/code/geschenkerbauer/autosign/internal/configs"
 )
 

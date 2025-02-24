@@ -1,0 +1,5 @@
+name: Update the package using pkgctl
+description: Update the package using pkgctl
+runs:
+  using: docker
+  image: Dockerfile

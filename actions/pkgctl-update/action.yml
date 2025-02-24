@@ -1,5 +1,11 @@
 name: Update the package using pkgctl
 description: Update the package using pkgctl
+inputs:
+  pkgbase:
+    description: Package directory to update using pkgctl
+    required: true
 runs:
   using: docker
   image: Dockerfile
+  args:
+    - ${{ inputs.pkgbase }}

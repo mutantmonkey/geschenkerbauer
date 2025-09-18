@@ -11,11 +11,6 @@ export HOME=/build
 # this is required to build some packages
 export SHELL=/bin/bash
 
-# create a temporary gnupg keyring
-if [[ -n "$GNUPG_PUBKEYRING" ]]; then
-    gpg2 --import "$GNUPG_PUBKEYRING"
-fi
-
 # unify timestamps so builds can be reproducible
 if [[ ! -v SOURCE_DATE_EPOCH ]]; then
 	export SOURCE_DATE_EPOCH=$(date +%s)
@@ -52,7 +47,14 @@ if [[ "$INPUT_NODEPS" == "1" ]] || [[ "$INPUT_NODEPS" == "true" ]]; then
     cp -a "$1/." /startdir
 
     pushd /startdir
+
+    # import package PGP keys into keyring
+    for f in keys/pgp/*.asc; do
+        gpg2 --import "$f"
+    done
+
     makepkg --nodeps --noconfirm
+
     popd
 else
     # inspect packages in the current directory and populate the
@@ -73,7 +75,14 @@ else
             cp -a "${pkgbase}/." /startdir
 
             pushd /startdir
+
+            # import package PGP keys into keyring
+            for f in keys/pgp/*.asc; do
+                gpg2 --import "$f"
+            done
+
             makepkg -is --noconfirm
+
             popd
 
             echo "::endgroup::"

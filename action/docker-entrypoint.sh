@@ -80,7 +80,9 @@ else
 
             # import package PGP keys into keyring
             for f in keys/pgp/*.asc; do
-                gpg2 --import "$f"
+                if [[ -f "$f" ]]; then
+                    gpg2 --import "$f"
+                fi
             done
 
             makepkg -is --noconfirm

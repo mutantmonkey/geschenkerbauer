@@ -6,7 +6,12 @@ on:
       - 'main'
     paths:
       - 'autosign/**'
+  schedule:
+    - cron: '22 10 * * *'
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   govulncheck_job:

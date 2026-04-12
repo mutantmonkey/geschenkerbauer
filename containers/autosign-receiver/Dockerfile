@@ -6,7 +6,7 @@ WORKDIR /usr/src/app/cmd/autosign-receiver/
 
 RUN go build
 
-FROM ghcr.io/archlinux/archlinux:base@sha256:4884e6cafdc288bc24c71bd48574bdb90203518e33f28eaf6a1ed233f7635c6e
+FROM ghcr.io/archlinux/archlinux:base@sha256:3b7c36a72d3e5b5996e2f29c911066a14efbb63f43491cde0dd5fef5c14b15e9
 
 RUN set -x \
         && pacman -Sy --noconfirm github-cli

@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/google/go-github/v66/github"
 	"github.com/minio/minio-go/v7"
@@ -36,6 +37,12 @@ func downloadFromS3(config Config) error {
 
 		filename := filepath.Base(filepath.Clean(object.Key))
 		destpath := filepath.Join(config.IncomingDir, filename)
+
+		// skip .part.minio files that sometimes end up here for some reason
+		if hasSuffix := strings.HasSuffix(".part.minio", filename); hasSuffix == true {
+			log.Printf("Warning: skipping %q because it has a banned suffix", filename)
+			continue
+		}
 
 		if _, err := os.Stat(filepath.Join(config.RepoDir, filename)); err == nil {
 			log.Printf("Warning: skipping %q because it already exists in the output directory", filename)

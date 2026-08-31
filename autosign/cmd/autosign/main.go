@@ -21,6 +21,7 @@ type Config struct {
 	GitHub               GitHubConfig
 	Webhook              WebhookConfig
 	S3                   configs.S3Config
+	Rsync                RsyncConfig
 }
 
 type GitHubConfig struct {
@@ -40,6 +41,14 @@ type ProcessOptions struct {
 	TimeWindow   string
 	MinRunNumber int
 	WorkflowName string
+}
+
+type RsyncConfig struct {
+	Addr           string
+	User           string
+	SSHKeyPath     string
+	KnownHostsPath string
+	RemotePath     string
 }
 
 func main() {

@@ -105,14 +105,14 @@ func postProcess(config Config) error {
 			return fmt.Errorf("starting remote gokr-rsync: %v", err)
 		}
 
-		client, err := rsyncclient.New([]string{"-rlt", "--remove-source-files"}, rsyncclient.WithSender())
-		if err != nil {
-			return fmt.Errorf("creating rsync client: %v", err)
-		}
-
 		rw := &rsync.BothCloser{
 			ReadCloser:  io.NopCloser(stdout),
 			WriteCloser: stdin,
+		}
+
+		client, err := rsyncclient.New([]string{"-rlt"}, rsyncclient.WithSender())
+		if err != nil {
+			return fmt.Errorf("creating rsync client: %v", err)
 		}
 
 		if _, err := client.RunDaemon(ctx, rw, config.Rsync.RemotePath, []string{config.OutputDir + "/"}); err != nil {
@@ -121,6 +121,27 @@ func postProcess(config Config) error {
 
 		if err := session.Wait(); err != nil {
 			return fmt.Errorf("SSH error: %v", err)
+		}
+
+		// We now have to clean up the temporary files ourselves since
+		// gokr-rsync does not implement --remove-source-files
+
+		log.Print("Files copied via rsync, beginning cleanup...")
+
+		files, err := os.ReadDir(config.OutputDir)
+		if err != nil {
+			return fmt.Errorf("reading output directory: %v", err)
+		}
+
+		for _, file := range files {
+			// skip directories, we only want regular files
+			if file.IsDir() {
+				continue
+			}
+
+			if err := os.Remove(filepath.Join(config.OutputDir, file.Name())); err != nil {
+				return fmt.Errorf("removing file: %v", err)
+			}
 		}
 	}
 

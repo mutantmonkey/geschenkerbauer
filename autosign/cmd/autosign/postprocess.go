@@ -100,7 +100,8 @@ func postProcess(config Config) error {
 		}
 
 		// The remote authorized keys file will force the command
-		// `gokr-rsync --daemon`, so the command here is ignored
+		// `gokr-rsync --daemon --server`, so the command here is
+		// ignored
 		if err := session.Shell(); err != nil {
 			return fmt.Errorf("starting remote gokr-rsync: %v", err)
 		}
@@ -147,7 +148,7 @@ func postProcess(config Config) error {
 
 	err := triggerWebhook(config)
 	if err != nil {
-		return fmt.Errorf("error triggering webhook: %v", err)
+		return fmt.Errorf("triggering webhook: %v", err)
 	}
 
 	return nil

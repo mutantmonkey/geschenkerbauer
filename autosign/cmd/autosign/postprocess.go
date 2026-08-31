@@ -111,7 +111,7 @@ func postProcess(config Config) error {
 			WriteCloser: stdin,
 		}
 
-		client, err := rsyncclient.New([]string{"-rlpt"}, rsyncclient.WithSender())
+		client, err := rsyncclient.New([]string{"-rlt"}, rsyncclient.WithSender())
 		if err != nil {
 			return fmt.Errorf("creating rsync client: %v", err)
 		}

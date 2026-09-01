@@ -27,12 +27,12 @@ func downloadFromS3(config Config) error {
 		Secure: true,
 	})
 	if err != nil {
-		return fmt.Errorf("error creating S3 client: %v", err)
+		return fmt.Errorf("create S3 client: %v", err)
 	}
 
 	for object := range client.ListObjects(ctx, config.S3.Bucket, minio.ListObjectsOptions{}) {
 		if object.Err != nil {
-			return fmt.Errorf("listing objects: %v", err)
+			return fmt.Errorf("list objects: %v", err)
 		}
 
 		filename := filepath.Base(filepath.Clean(object.Key))
@@ -60,7 +60,7 @@ func downloadFromS3(config Config) error {
 func ProcessIncoming(config Config) error {
 	if config.S3.Endpoint != "" {
 		if err := downloadFromS3(config); err != nil {
-			return fmt.Errorf("downloading from S3: %v", err)
+			return fmt.Errorf("download from S3: %v", err)
 		}
 	}
 
@@ -68,7 +68,7 @@ func ProcessIncoming(config Config) error {
 
 	files, err := fs.Glob(fileSystem, "*.pkg.tar.zst")
 	if err != nil {
-		return fmt.Errorf("reading incoming directory: %v", err)
+		return fmt.Errorf("read incoming directory: %v", err)
 	}
 
 	for _, filename := range files {
@@ -90,24 +90,24 @@ func ProcessIncoming(config Config) error {
 		// verify attestation
 		client := github.NewClient(nil).WithAuthToken(config.GitHub.AuthToken)
 		if _, err := attestation.VerifyAttestation(incomingFilepath, client, config.GitHub.Owner, config.GitHub.Repo); err != nil {
-			return fmt.Errorf("validating attestation: %v", err)
+			return fmt.Errorf("validate attestation: %v", err)
 		}
 
 		// move package signature to final output directory
 		if err := fshelpers.MoveFile(incomingFilepath+".sig", filepath.Join(config.RepoDir, filename+".sig")); err != nil {
-			return fmt.Errorf("moving package signature to destination directory: %v", err)
+			return fmt.Errorf("move package signature to destination directory: %v", err)
 		}
 
 		// move package to final output directory
 		if err := fshelpers.MoveFile(incomingFilepath, filepath.Join(config.RepoDir, filename)); err != nil {
-			return fmt.Errorf("moving package to destination directory: %v", err)
+			return fmt.Errorf("move package to destination directory: %v", err)
 		}
 
 		// add new packages to repository database
 		cmd := exec.Command("repo-add", config.DbName, filename)
 		cmd.Dir = config.RepoDir
 		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("adding package to repository database: %v", err)
+			return fmt.Errorf("add package to repository database: %v", err)
 		}
 	}
 

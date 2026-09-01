@@ -64,7 +64,11 @@ func ProcessIncoming(config Config) error {
 		}
 	}
 
-	fileSystem := os.DirFS(config.IncomingDir)
+	root, err := os.OpenRoot(config.IncomingDir)
+	if err != nil {
+		return fmt.Errorf("open incoming directory: %v", err)
+	}
+	fileSystem := root.FS()
 
 	files, err := fs.Glob(fileSystem, "*.pkg.tar.zst")
 	if err != nil {

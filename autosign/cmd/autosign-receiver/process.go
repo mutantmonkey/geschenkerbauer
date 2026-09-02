@@ -64,13 +64,21 @@ func ProcessIncoming(config Config) error {
 		}
 	}
 
-	root, err := os.OpenRoot(config.IncomingDir)
+	incomingRoot, err := os.OpenRoot(config.IncomingDir)
 	if err != nil {
 		return fmt.Errorf("open incoming directory: %v", err)
 	}
-	fileSystem := root.FS()
+	defer incomingRoot.Close()
 
-	files, err := fs.Glob(fileSystem, "*.pkg.tar.zst")
+	incomingFS := incomingRoot.FS()
+
+	repoRoot, err := os.OpenRoot(config.RepoDir)
+	if err != nil {
+		return fmt.Errorf("open repo directory: %v", err)
+	}
+	defer repoRoot.Close()
+
+	files, err := fs.Glob(incomingFS, "*.pkg.tar.zst")
 	if err != nil {
 		return fmt.Errorf("read incoming directory: %v", err)
 	}
@@ -81,12 +89,12 @@ func ProcessIncoming(config Config) error {
 		fmt.Printf("%s\n", incomingFilepath)
 
 		// skip packages that already exist in the output directory
-		if _, err := os.Stat(filepath.Join(config.RepoDir, filename)); err == nil {
+		if _, err := repoRoot.Stat(filename); err == nil {
 			log.Printf("Warning: skipping %q because it already exists in the output directory", filename)
 			continue
 		}
 
-		if _, err := os.Stat(incomingFilepath + ".sig"); err != nil {
+		if _, err := incomingRoot.Stat(filename + ".sig"); err != nil {
 			log.Printf("Warning: skipping %q because signature was not present", filename)
 			continue
 		}

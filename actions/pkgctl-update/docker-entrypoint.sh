@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
+export TERM="${TERM:-dumb}"
+
 cp -a "$1/." /startdir
 chown -R builduser:users /startdir
 

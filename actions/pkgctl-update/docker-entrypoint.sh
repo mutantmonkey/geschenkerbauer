@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-export TERM=${TERM:-dumb}
+export TERM=${TERM:-xterm-256color}
 
 mkdir -p /startdir
 cp -a "$1/." /startdir

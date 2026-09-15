@@ -1,4 +1,4 @@
-FROM ghcr.io/archlinux/archlinux:base-devel@sha256:d4d292c2614c0577ba9ba3240631fd3004eb8fddb83a743ff72bea9c4a96f985
+FROM ghcr.io/archlinux/archlinux:base-devel@sha256:e57a29572b0c6ff1e8ea79a4fe6475af89ef5cc281604623bb421591fe0e5805
 
 RUN set -x \
         && pacman -Syu --noconfirm \

@@ -8,4 +8,4 @@ RUN set -x \
 COPY docker-entrypoint.sh /
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
-USER builduser
+#USER builduser

@@ -2,5 +2,5 @@
 set -e
 pushd $1
 pkgctl version upgrade .
-makepkg --printsrcinfo > .SRCINFO
+sudo -u builduser makepkg --printsrcinfo > .SRCINFO
 popd

@@ -11,7 +11,7 @@ runs:
   using: docker
   image: ../containers/builder/Dockerfile
   env:
-    BUILDSRC: ${{ github.workspace }}/buildsrc
-    PKGDEST: ${{ github.workspace }}/repo
+    BUILDSRC: "${{ env.GITHUB_WORKSPACE }}/buildsrc"
+    PKGDEST: "${{ env.GITHUB_WORKSPACE }}/repo"
   args:
     - ${{ inputs.packages }}

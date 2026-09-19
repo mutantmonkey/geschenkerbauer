@@ -9,6 +9,9 @@ inputs:
     required: false
 runs:
   using: docker
-  image: Dockerfile
+  image: ../containers/builder/Dockerfile
+  env:
+    BUILDSRC: ${{ github.workspace }}/buildsrc
+    PKGDEST: ${{ github.workspace }}/repo
   args:
     - ${{ inputs.packages }}

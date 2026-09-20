@@ -7,13 +7,14 @@ function get_attested_image() {
     echo "${image}@${digest}"
 }
 
-
 arch_image_repo=ghcr.io/archlinux/archlinux
 base_image=$(get_attested_image ${arch_image_repo}:base)
 devel_image=$(get_attested_image ${arch_image_repo}:base-devel)
 
 sed -i "s#^FROM ${arch_image_repo}.*\$#FROM ${base_image}#" containers/autosign-receiver/Dockerfile
 sed -i "s#^FROM ${arch_image_repo}.*\$#FROM ${devel_image}#" containers/builder/Dockerfile
+
+sed -i "s#^FROM ${arch_image_repo}.*\$#FROM ${base_image}#" actions/namcap/Dockerfile
 
 git add containers/{autosign-receiver,builder}/Dockerfile
 git commit -m "Update Arch Linux Docker base images"

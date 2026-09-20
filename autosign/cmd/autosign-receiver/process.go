@@ -39,7 +39,7 @@ func downloadFromS3(config Config) error {
 		destpath := filepath.Join(config.IncomingDir, filename)
 
 		// skip .part.minio files that sometimes end up here for some reason
-		if hasSuffix := strings.HasSuffix(".part.minio", filename); hasSuffix == true {
+		if hasSuffix := strings.HasSuffix(filename, ".part.minio"); hasSuffix == true {
 			log.Printf("Warning: skipping %q because it has a banned suffix", filename)
 			continue
 		}

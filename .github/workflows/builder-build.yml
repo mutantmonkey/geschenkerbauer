@@ -59,6 +59,7 @@ jobs:
           context: containers/builder
           file: containers/builder/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
+          provenance: mode=max
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
